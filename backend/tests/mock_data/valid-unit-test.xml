@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="jest tests" tests="17" failures="1" errors="0" time="1.127">
+  <testsuite name="getTestReports" errors="0" failures="1" skipped="0" timestamp="2024-02-03T17:49:05" time="0.594" tests="8">
+    <testcase classname="getTestReports should return test reports for a specific branch and repo" name="getTestReports should return test reports for a specific branch and repo" time="0.003">
+    </testcase>
+    <testcase classname="getTestReports should return 404 if no test reports found" name="getTestReports should return 404 if no test reports found" time="0.001">
+    </testcase>
+    <testcase classname="getTestDetails should return test details for a specific branch and repo" name="getTestDetails should return test details for a specific branch and repo" time="0.001">
+    </testcase>
+    <testcase classname="getTestDetails should return 404 if no test details found" name="getTestDetails should return 404 if no test details found" time="0.001">
+    </testcase>
+    <testcase classname="insertTests should return 400 if no file is uploaded" name="insertTests should return 400 if no file is uploaded" time="0.004">
+    </testcase>
+    <testcase classname="insertTests should return 400 if the file type is invalid" name="insertTests should return 400 if the file type is invalid" time="0.001">
+    </testcase>
+    <testcase classname="insertTests should return 400 if the XML is invalid" name="insertTests should return 400 if the XML is invalid" time="0.001">
+    </testcase>
+    <testcase classname="insertTests should create repo, branch, test report, test suites, and test cases" name="insertTests should create repo, branch, test report, test suites, and test cases" time="0.002">
+      <failure>Error: expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+Expected: {&quot;defaults&quot;: {&quot;organizationId&quot;: 1, &quot;repoName&quot;: &quot;testRepo&quot;}, &quot;where&quot;: {&quot;organizationId&quot;: 1, &quot;repoName&quot;: &quot;testRepo&quot;}}
+
+Number of calls: 0
+    at Object.toHaveBeenCalledWith (/home/riedldsr/TestRep/backend/server/tests.test.js:288:34)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)</failure>
+    </testcase>
+  </testsuite>
+  <testsuite name="createUser" errors="0" failures="0" skipped="0" timestamp="2024-02-03T17:49:05" time="0.246" tests="5">
+    <testcase classname="createUser should create a new user successfully" name="createUser should create a new user successfully" time="0.003">
+    </testcase>
+    <testcase classname="createUser should handle SequelizeUniqueConstraintError and return 400" name="createUser should handle SequelizeUniqueConstraintError and return 400" time="0.002">
+    </testcase>
+    <testcase classname="createUser should handle other errors and return 500" name="createUser should handle other errors and return 500" time="0.001">
+    </testcase>
+    <testcase classname="getOrganizations should return organizations successfully" name="getOrganizations should return organizations successfully" time="0">
+    </testcase>
+    <testcase classname="getOrganizations should handle organization not found and return 404" name="getOrganizations should handle organization not found and return 404" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="getRepos" errors="0" failures="0" skipped="0" timestamp="2024-02-03T17:49:05" time="0.222" tests="4">
+    <testcase classname="getRepos should return repos when they exist" name="getRepos should return repos when they exist" time="0.002">
+    </testcase>
+    <testcase classname="getRepos should return 404 when no repos exist" name="getRepos should return 404 when no repos exist" time="0">
+    </testcase>
+    <testcase classname="getBranches should return branches when they exist" name="getBranches should return branches when they exist" time="0.004">
+    </testcase>
+    <testcase classname="getBranches should return 404 when no branches exist" name="getBranches should return 404 when no branches exist" time="0">
+    </testcase>
+  </testsuite>
+</testsuites>

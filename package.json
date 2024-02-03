@@ -2,9 +2,10 @@
   "name": "testrep",
   "version": "1.0.0",
   "description": "",
+  "type": "module",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest --coverage"
   },
   "repository": {
     "type": "git",
@@ -15,5 +16,28 @@
   "bugs": {
     "url": "https://github.com/donaldriedl/TestRep/issues"
   },
-  "homepage": "https://github.com/donaldriedl/TestRep#readme"
+  "homepage": "https://github.com/donaldriedl/TestRep#readme",
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "jest-junit": "^16.0.0"
+  },
+  "jest": {
+    "reporters": [
+      "default",
+      "jest-junit"
+    ],
+    "coverageDirectory": "results",
+    "coverageReporters": [
+      "cobertura",
+      "lcov"
+    ],
+    "collectCoverageFrom": [
+      "backend/server/*.js",
+      "backend/models/*.js"
+    ]
+  },
+  "jest-junit": {
+    "outputDirectory": "results",
+    "outputName": "unit.xml"
+  }
 }
