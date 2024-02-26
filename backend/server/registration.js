@@ -1,3 +1,4 @@
+const bcrypt = require('bcrypt');
 const Organization = require('../models/organization.js');
 const User = require('../models/user.js');
 
@@ -8,7 +9,9 @@ async function createUser(req, res) {
       const organization = new Organization({ organizationName: orgName });
       await organization.save();
 
-      const user = new User({ email, pass: password, organizationId: organization.id });
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      const user = new User({ email, pass: hashedPassword, organizationId: organization.id });
       await user.save();
 
       res.sendStatus(201, 'User created');

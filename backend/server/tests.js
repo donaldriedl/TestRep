@@ -1,4 +1,5 @@
 const { XMLParser, XMLValidator } = require('fast-xml-parser');
+const { Op, literal } = require('sequelize');
 const TestReport = require('../models/test_report.js');
 const TestSuite = require('../models/test_suite.js');
 const TestCase = require('../models/test_case.js');
@@ -69,6 +70,52 @@ async function getTestDetails(req, res) {
   }
 
   return res.json({ TestDetails });
+}
+
+async function getOrganizationTestSummary(req) {
+  const lastThirtyDays = new Date();
+  lastThirtyDays.setDate(lastThirtyDays.getDate() - 60);
+
+  const testReports = await TestReport.findAll({
+    attributes: [
+      [literal('DATE(TestReport.createdAt)'), 'date'], // Specify TestReport.createdAt to avoid ambiguity
+      [literal('AVG(COALESCE(totalTests, 0))'), 'totalTests'],
+      [literal('AVG(COALESCE(totalFailures, 0))'), 'totalFailures'],
+      [literal('AVG(COALESCE(totalErrors, 0))'), 'totalErrors'],
+      [literal('AVG(COALESCE(totalSkipped, 0))'), 'totalSkipped'],
+    ],
+    where: {
+      createdAt: { [Op.gte]: lastThirtyDays },
+      '$Branch.Repo.organizationId$': req.user.organizationId
+    },
+    include: [
+      {
+        model: Branch,
+        attributes: [],
+        include: [
+          {
+            model: Repo,
+            attributes: [],
+            where: { organizationId: req.user.organizationId }
+          }
+        ]
+      }
+    ],
+    group: ['date']
+  });
+
+  if (!testReports.length) {
+    return null;
+  }
+
+  let jsonReports = testReports.map(report => report.toJSON());
+  for (const report of jsonReports) {
+    report.date = new Date(report.date).toISOString();
+    report.totalPassed = Number(report.totalTests) - (Number(report.totalFailures) + Number(report.totalErrors) + Number(report.totalSkipped));
+  }
+  console.log(jsonReports);
+
+  return jsonReports;
 }
 
 async function insertTests(req, res) {
@@ -153,4 +200,9 @@ async function insertTests(req, res) {
   res.sendStatus(200);
 }
 
-module.exports = { getTestReports, getTestDetails, insertTests };
+module.exports = {
+  getTestReports,
+  getTestDetails,
+  getOrganizationTestSummary,
+  insertTests
+};

@@ -6,5 +6,10 @@
 
 // https://next.vuetifyjs.com/features/sass-variables/`
 // @use 'vuetify' with (
-//   $color-pack: false
+//   $color-pack: true
 // );
+
+tr.v-data-table__tr:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+}

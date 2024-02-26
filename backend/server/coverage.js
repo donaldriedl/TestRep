@@ -1,4 +1,5 @@
 const { XMLParser, XMLValidator } = require('fast-xml-parser');
+const { Op, literal } = require('sequelize');
 const CoverageReport = require('../models/coverage_report.js');
 const CoverageFile = require('../models/coverage_file.js');
 const Branch = require('../models/branch.js');
@@ -63,6 +64,50 @@ async function getCoverageDetails(req, res) {
   }
 
   return res.json({ CoverageDetails });
+}
+
+async function getOrganizationCoverageSummary(req) {
+  const lastThirtyDays = new Date();
+  lastThirtyDays.setDate(lastThirtyDays.getDate() - 30);
+
+  const coverageReports = await CoverageReport.findAll({
+    attributes: [
+      [literal('DATE(CoverageReport.createdAt)'), 'date'],
+      [literal('AVG(branchRate)'), 'branchRate'],
+      [literal('AVG(lineRate)'), 'lineRate'],
+    ],
+    where: {
+      createdAt: { [Op.gte]: lastThirtyDays },
+      '$Branch.Repo.organizationId$': req.user.organizationId
+    },
+    include: [
+      {
+        model: Branch,
+        attributes: [],
+        include: [
+          {
+            model: Repo,
+            attributes: [],
+            where: { organizationId: req.user.organizationId }
+          }
+        ]
+      }
+    ],
+    group: ['date']
+  });
+
+  if (!coverageReports.length) {
+    return null;
+  }
+  
+  const jsonReport = coverageReports.map(report => report.toJSON());
+  for (const report of jsonReport) {
+    report.date = new Date(report.date).toISOString();
+  }
+
+  console.log(jsonReport);
+
+  return jsonReport;
 }
 
 async function uploadCoverageReport(req, res) {
@@ -131,5 +176,6 @@ async function uploadCoverageReport(req, res) {
 module.exports = {
   getCoverageReports,
   getCoverageDetails,
+  getOrganizationCoverageSummary,
   uploadCoverageReport
 };
