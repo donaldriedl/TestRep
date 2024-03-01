@@ -87,21 +87,21 @@ app.get('/repos/:repoId/branches', (req, res) => {
 /**
  * Test Reports and Test Details
  */
-app.get('/repos/:repoId/branches/:branchId/tests', (req, res) => {
+app.get('/:repoId/:branchId/tests', (req, res) => {
   if (!req.user) {
     return res.status(401).json({ message: 'Unauthorized' });
   }
   getTestReports(req, res);
 });
 
-app.get('/repos/:repoId/branches/:branchId/tests/:reportId/details', (req, res) => {
+app.get('/:repoId/:branchId/tests/:reportId/details', (req, res) => {
   if (!req.user) {
     return res.status(401).json({ message: 'Unauthorized' });
   }
   getTestDetails(req, res);
 });
 
-app.post('/repos/:repoName/branches/:branchName/tests', upload.single('file'), async (req, res) => {
+app.post('/:repoName/:branchName/tests', upload.single('file'), async (req, res) => {
   const uuid = req.headers['x-organization-uuid'];
   if (!uuid) {
     return res.status(400).json({ message: 'Organization UUID is required' });
@@ -116,21 +116,21 @@ app.post('/repos/:repoName/branches/:branchName/tests', upload.single('file'), a
 /**
  * Coverage Reports and Coverage Details
  */
-app.get('/repos/:repoId/branches/:branchId/coverage', (req, res) => {
+app.get('/:repoId/:branchId/coverage', (req, res) => {
   if (!req.user) {
     return res.status(401).json({ message: 'Unauthorized' });
   }
   getCoverageReports(req, res);
 });
 
-app.get('/repos/:repoId/branches/:branchId/coverage/:reportId/details', (req, res) => {
+app.get('/:repoId/:branchId/coverage/:reportId/details', (req, res) => {
   if (!req.user) {
     return res.status(401).json({ message: 'Unauthorized' });
   }
   getCoverageDetails(req, res);
 });
 
-app.post('/repos/:repoName/branches/:branchName/coverage', upload.single('file'), async (req, res) => {
+app.post('/:repoName/:branchName/coverage', upload.single('file'), async (req, res) => {
   const uuid = req.headers['x-organization-uuid'];
   if (!uuid) {
     return res.status(400).json({ message: 'Organization UUID is required' });

@@ -31,10 +31,10 @@ jobs:
       - name: Download Test Results
         uses: actions/download-artifact@v3
         with:
-          name: ${{ github.event.inputs.artifactName }}
+          name: ${{ inputs.artifactName }}
           path: results
       - name: Upload Test Results
         run: |
-          curl --location 'http://localhost:3001/${{ github.event.inputs.repo }}/${{ steps.branch.outputs.branch }}/tests' \
+          curl --location 'http://localhost:3001/${{ inputs.repo }}/${{ steps.branch.outputs.branch }}/tests' \
             --header 'x-organization-uuid: ${{ secrets.ORGANIZATION_UUID }}' \
-            --form 'file=@results/${{ github.event.inputs.testFile }}'
+            --form 'file=@results/${{ inputs.testFile }}'
