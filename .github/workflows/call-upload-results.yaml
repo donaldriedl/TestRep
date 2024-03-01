@@ -5,18 +5,19 @@ on:
     inputs:
       repo:
         description: 'Repository name'
+        type: string
         required: true
       ref:
         description: 'Github ref'
-        required: true
-      organizationUuid:
-        description: 'Organization UUID'
+        type: string
         required: true
       artifactName:
         description: 'Artifact name'
+        type: string
         required: true
       testFile:
         description: 'Test file path'
+        type: string
         required: true
 
 jobs:
