@@ -6,8 +6,8 @@ on:
       repo:
         description: 'Repository name'
         required: true
-      branch:
-        description: 'Branch name'
+      ref:
+        description: 'Github ref'
         required: true
       organizationUuid:
         description: 'Organization UUID'
@@ -24,6 +24,9 @@ jobs:
     name: Upload Results
     runs-on: self-hosted
     steps:
+      - name: Get Branch Name
+        id: branch
+        run: echo ::set-output name=branch::${GITHUB_REF#refs/heads/}
       - name: Download Test Results
         uses: actions/download-artifact@v3
         with:
@@ -31,6 +34,6 @@ jobs:
           path: results
       - name: Upload Test Results
         run: |
-          curl --location 'http://localhost:3001/${{ github.event.inputs.repo }}/${{ github.event.inputs.branch }}/tests' \
+          curl --location 'http://localhost:3001/${{ github.event.inputs.repo }}/${{ steps.branch.outputs.branch }}/tests' \
             --header 'x-organization-uuid: ${{ github.event.inputs.organizationUuid }}' \
             --form 'file=@results/${{ github.event.inputs.testFile }}'

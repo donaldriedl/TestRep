@@ -27,7 +27,7 @@ jobs:
     uses: ./.github/workflows/call-upload-results.yaml
     with:
       repo: ${{ github.repository }}
-      branch: ${{ github.ref##*/ }}
+      ref: ${{ github.ref }}
       organizationUuid: ${{ secrets.ORGANIZATION_UUID }}
       artifactName: test-results
       testFile: unit.xml
