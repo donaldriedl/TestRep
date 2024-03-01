@@ -24,6 +24,7 @@ jobs:
   upload-results:
     name: Upload Results
     runs-on: self-hosted
+    needs: run-tests
     steps:
       - name: Get Branch Name
         id: branch
