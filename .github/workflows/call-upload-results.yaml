@@ -1,0 +1,36 @@
+name: Upload Test Results
+
+on:
+  workflow_call:
+    inputs:
+      repo:
+        description: 'Repository name'
+        required: true
+      branch:
+        description: 'Branch name'
+        required: true
+      organizationUuid:
+        description: 'Organization UUID'
+        required: true
+      artifactName:
+        description: 'Artifact name'
+        required: true
+      testFile:
+        description: 'Test file path'
+        required: true
+
+jobs:
+  upload-results:
+    name: Upload Results
+    runs-on: self-hosted
+    steps:
+      - name: Download Test Results
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ github.event.inputs.artifactName }}
+          path: results
+      - name: Upload Test Results
+        run: |
+          curl --location 'http://localhost:3001/${{ github.event.inputs.repo }}/${{ github.event.inputs.branch }}/tests' \
+            --header 'x-organization-uuid: ${{ github.event.inputs.organizationUuid }}' \
+            --form 'file=@results/${{ github.event.inputs.testFile }}'

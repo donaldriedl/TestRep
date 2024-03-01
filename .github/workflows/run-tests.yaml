@@ -6,6 +6,7 @@ on:
 
 jobs:
   run-tests:
+    name: Run Tests
     runs-on: self-hosted
     steps:
       - name: Checkout
@@ -20,3 +21,13 @@ jobs:
         with:
           name: test-results
           path: results
+
+  upload-results:
+    name: Upload Results
+    uses: ./.github/workflows/call-upload-results.yaml
+    with:
+      repo: ${{ github.repository }}
+      branch: ${{ GITHUB_REF##*/ }}
+      organizationUuid: ${{ secrets.ORGANIZATION_UUID }}
+      artifactName: test-results
+      testFile: unit.xml
