@@ -11,7 +11,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Install Dependencies
-        run: npm install
+        run: npm install && cd backend && npm install
       - name: Run Tests
         run: npm test
       - name: Upload Test Results
