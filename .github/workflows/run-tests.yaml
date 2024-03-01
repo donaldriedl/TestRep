@@ -4,6 +4,9 @@ on:
   workflow_dispatch:
   push:
 
+env:
+  ORGANIZATION_UUID: ${{ secrets.ORGANIZATION_UUID }}
+
 jobs:
   run-tests:
     name: Run Tests
@@ -28,6 +31,6 @@ jobs:
     with:
       repo: ${{ github.repository }}
       ref: ${{ github.ref }}
-      organizationUuid: ${{ secrets.ORGANIZATION_UUID }}
       artifactName: test-results
       testFile: unit.xml
+    secrets: inherit

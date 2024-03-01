@@ -35,5 +35,5 @@ jobs:
       - name: Upload Test Results
         run: |
           curl --location 'http://localhost:3001/${{ github.event.inputs.repo }}/${{ steps.branch.outputs.branch }}/tests' \
-            --header 'x-organization-uuid: ${{ github.event.inputs.organizationUuid }}' \
+            --header 'x-organization-uuid: ${{ secrets.ORGANIZATION_UUID }}' \
             --form 'file=@results/${{ github.event.inputs.testFile }}'
