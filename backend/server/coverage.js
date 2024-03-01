@@ -110,7 +110,7 @@ async function getOrganizationCoverageSummary(req) {
   return jsonReport;
 }
 
-async function uploadCoverageReport(req, res) {
+async function uploadCoverageReport(req, res, organizationId) {
   if (!req.file) {
     return res.status(400).json({ message: 'No file uploaded' });
   }
@@ -131,8 +131,8 @@ async function uploadCoverageReport(req, res) {
   }
 
   const repo = await Repo.findOrCreate({
-    where: { repoName: req.params.repoName, organizationId: req.user.organizationId },
-    defaults: { repoName: req.params.repoName, organizationId: req.user.organizationId }
+    where: { repoName: req.params.repoName, organizationId },
+    defaults: { repoName: req.params.repoName, organizationId }
   });
 
   const branch = await Branch.findOrCreate({

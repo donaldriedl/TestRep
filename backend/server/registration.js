@@ -1,4 +1,5 @@
 const bcrypt = require('bcrypt');
+const { v4 } = require('uuid');
 const Organization = require('../models/organization.js');
 const User = require('../models/user.js');
 
@@ -6,7 +7,8 @@ async function createUser(req, res) {
     const { email, password, orgName } = req.body;
 
     try {
-      const organization = new Organization({ organizationName: orgName });
+      const randomUuid = v4();
+      const organization = new Organization({ organizationName: orgName, organizationUuid: randomUuid });
       await organization.save();
 
       const hashedPassword = await bcrypt.hash(password, 10);
@@ -31,4 +33,9 @@ async function getOrganizations(req, res) {
   return res.json({ organizations });
 }
 
-module.exports = { createUser, getOrganizations };
+async function getOrganizationByUuid(uuid) {
+  const organization = await Organization.findOne({ where: { organizationUuid: uuid } });
+  return organization;
+}
+
+module.exports = { createUser, getOrganizations, getOrganizationByUuid };

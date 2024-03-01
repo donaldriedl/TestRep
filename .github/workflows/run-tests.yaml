@@ -1,0 +1,21 @@
+name: Run Tests
+
+on:
+  workflow_dispatch:
+  push:
+
+jobs:
+  run-tests:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Install Dependencies
+        run: npm install
+      - name: Run Tests
+        run: npm test
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-results
+          path: results

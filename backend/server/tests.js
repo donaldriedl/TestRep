@@ -118,7 +118,7 @@ async function getOrganizationTestSummary(req) {
   return jsonReports;
 }
 
-async function insertTests(req, res) {
+async function insertTests(req, res, organizationId) {
   if (!req.file) {
     return res.status(400).json({ message: 'No file uploaded' });
   }
@@ -135,8 +135,8 @@ async function insertTests(req, res) {
   const parsedXml = parser.parse(rawXml);
 
   const repo = await Repo.findOrCreate({
-    where: { repoName: req.params.repoName, organizationId: req.user.organizationId },
-    defaults: { repoName: req.params.repoName, organizationId: req.user.organizationId }
+    where: { repoName: req.params.repoName, organizationId },
+    defaults: { repoName: req.params.repoName, organizationId }
   });
 
   const branch = await Branch.findOrCreate({

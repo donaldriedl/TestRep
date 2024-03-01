@@ -3,7 +3,7 @@ const cors = require('cors');
 const session = require('express-session');
 const multer = require('multer');
 const passport = require('./server/middleware.js');
-const { createUser, getOrganizations } = require('./server/registration.js');
+const { createUser, getOrganizations, getOrganizationByUuid } = require('./server/registration.js');
 const { getRepos, getBranches } = require('./server/repos.js');
 const { getTestReports, getTestDetails, insertTests } = require('./server/tests.js');
 const { getCoverageReports, getCoverageDetails, uploadCoverageReport } = require('./server/coverage.js');
@@ -101,11 +101,16 @@ app.get('/repos/:repoId/branches/:branchId/tests/:reportId/details', (req, res) 
   getTestDetails(req, res);
 });
 
-app.post('/repos/:repoName/branches/:branchName/tests', upload.single('file'), (req, res) => {
-  if (!req.user) {
-    return res.status(401).json({ message: 'Unauthorized' });
+app.post('/repos/:repoName/branches/:branchName/tests', upload.single('file'), async (req, res) => {
+  const uuid = req.headers['x-organization-uuid'];
+  if (!uuid) {
+    return res.status(400).json({ message: 'Organization UUID is required' });
   }
-  insertTests(req, res);
+  const organization = await getOrganizationByUuid(uuid);
+  if (!organization) {
+    return res.status(404).json({ message: 'Organization not found' });
+  }
+  insertTests(req, res, organization.id);
 });
 
 /**
@@ -125,11 +130,16 @@ app.get('/repos/:repoId/branches/:branchId/coverage/:reportId/details', (req, re
   getCoverageDetails(req, res);
 });
 
-app.post('/repos/:repoName/branches/:branchName/coverage', upload.single('file'), (req, res) => {
-  if (!req.user) {
-    return res.status(401).json({ message: 'Unauthorized' });
+app.post('/repos/:repoName/branches/:branchName/coverage', upload.single('file'), async (req, res) => {
+  const uuid = req.headers['x-organization-uuid'];
+  if (!uuid) {
+    return res.status(400).json({ message: 'Organization UUID is required' });
   }
-  uploadCoverageReport(req, res);
+  const organization = await getOrganizationByUuid(uuid);
+  if (!organization) {
+    return res.status(404).json({ message: 'Organization not found' });
+  }
+  uploadCoverageReport(req, res, organization.id);
 });
 
 app.listen(port, () => {

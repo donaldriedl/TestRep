@@ -5,7 +5,11 @@ const Organization = sequelize.define('Organization', {
   organizationName: {
     type: DataTypes.STRING,
     allowNull: false
-  }
+  },
+  organizationUuid: {
+    type: DataTypes.UUID,
+    allowNull: false
+  },
 });
 
 module.exports = Organization;
