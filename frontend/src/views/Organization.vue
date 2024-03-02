@@ -48,23 +48,20 @@
   }
 
   async function getOrganizationRepoData() {
-    fetch('http://localhost:3001/repos', {
+    const response = fetch('http://localhost:3001/repos', {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json'
       },
       credentials: 'include'
-    }).then(response => {
-      if (response.status === 401) {
-        router.push('/login');
-      } else {
-        return response.json();
-      }
-    }).then(data => {
+    });
+    
+    if (response.status === 401) {
+      router.push('/login');
+    } else {
+      const data = await response.json();
       repoData.value = data;
       repoDataLoaded.value = true;
-    }).catch(error => {
-      console.error('Error:', error);
-    });
+    }
   }
 </script>

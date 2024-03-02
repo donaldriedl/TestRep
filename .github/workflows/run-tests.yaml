@@ -26,10 +26,21 @@ jobs:
           path: results
 
   upload-results:
-    name: Upload Results
-    uses: ./.github/workflows/call-upload-results.yaml
+    name: Upload Test Results
+    uses: ./.github/workflows/call-upload-tests.yaml
     needs: run-tests
     with:
+      resultType: tests
       artifactName: test-results
       testFile: unit.xml
+    secrets: inherit
+
+  upload-coverage:
+    name: Upload Coverage Results
+    uses: ./.github/workflows/call-upload-tests.yaml
+    needs: run-tests
+    with:
+      resultType: coverage
+      artifactName: test-results
+      testFile: cobertura-coverage.xml
     secrets: inherit

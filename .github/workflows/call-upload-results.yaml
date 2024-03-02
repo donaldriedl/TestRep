@@ -3,6 +3,10 @@ name: Upload Test Results
 on:
   workflow_call:
     inputs:
+      resultType:
+        description: 'Type of result'
+        enum: ['tests', 'coverage']
+        required: true
       artifactName:
         description: 'Artifact name'
         type: string
@@ -13,8 +17,8 @@ on:
         required: true
 
 jobs:
-  upload-results:
-    name: Upload Results
+  upload-test-results:
+    name: Upload Test Results
     runs-on: self-hosted
     steps:
       - name: Get Repo Name
@@ -30,6 +34,6 @@ jobs:
           path: results
       - name: Upload Test Results
         run: |
-          curl --location 'http://localhost:3001/${{ steps.repo.outputs.repo }}/${{ steps.branch.outputs.branch }}/tests' \
+          curl --location 'http://localhost:3001/${{ steps.repo.outputs.repo }}/${{ steps.branch.outputs.branch }}/${{ inputs.resultType }}' \
             --header 'x-organization-uuid: ${{ secrets.ORGANIZATION_UUID }}' \
             --form 'file=@results/${{ inputs.testFile }}'

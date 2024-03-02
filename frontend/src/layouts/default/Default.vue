@@ -1,6 +1,8 @@
 <template>
   <v-app>
-    <default-bar />
+    <default-bar 
+      v-if="store.getters.isLoggedIn"
+    />
 
     <default-view />
   </v-app>
@@ -9,4 +11,36 @@
 <script setup>
   import DefaultBar from './AppBar.vue'
   import DefaultView from './View.vue'
+  import { useStore } from 'vuex'
+  import { useRouter } from 'vue-router'
+  import { onMounted, ref } from 'vue'
+
+  const router = useRouter()
+  const store = useStore()
+
+  onMounted(() => {
+    checkSession()
+  })
+
+  async function checkSession() {
+    if (store.getters.isLoggedIn) {
+      return;
+    }
+
+    const response = await fetch('http://localhost:3001/session', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      credentials: 'include'
+    });
+
+    if (response.status === 200) {
+      const data = await response.json()
+      store.commit('setUser', data);
+      router.push('/dashboard');
+    } else {
+      router.push('/login');
+    }
+  }
 </script>

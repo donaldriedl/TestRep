@@ -29,7 +29,12 @@ app.use(passport.session())
  * Sessions and Users
  */
 app.post('/session', passport.authenticate('local'), (req, res) => {
-  res.sendStatus(201);
+  if (req.user) {
+    res.status(201).json({ 
+      email: req.user.email,
+      organizationId: req.user.organizationId
+    });
+  }
 });
 
 app.get('/session', (req, res) => {

@@ -4,6 +4,7 @@ const TestReport = require('../models/test_report.js');
 const CoverageReport = require('../models/coverage_report.js');
 
 async function getRepos(req, res) {
+  console.log(req.user.organizationId);
   const repos = await Repo.findAll({
     attributes: ['id', 'repoName'],
     where: {
@@ -29,6 +30,7 @@ async function getRepos(req, res) {
       ]
     }
   });
+  console.log(repos);
 
   if (!repos.length) {
     return res.status(404).json({ message: 'Repos not found' });

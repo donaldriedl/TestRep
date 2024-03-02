@@ -21,6 +21,9 @@
 <script setup>
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { useStore } from 'vuex';
+
+const store = useStore();
 
 const router = useRouter();
 const emailField = ref('');
@@ -35,25 +38,17 @@ const login = () => {
     return;
   }
 
-  fetch('http://localhost:3001/session', {
-    method: 'POST',
-    body: JSON.stringify({
+  store.dispatch('login',
+    {
       email: emailField.value,
       password: passwordField.value
-    }),
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    credentials: 'include'
-  }).then(response => {
-    if (response.status === 201) {
-      router.push('/dashboard');
-    } else {
-      snackbar.value = true;
-      snackbarMessage.value = 'Invalid email or password';
-      passwordField.value = '';
     }
-  });
+  ).then(() => {
+    router.push('/dashboard');
+  }).catch(() => {
+    snackbar.value = true;
+    snackbarMessage.value = 'Invalid email or password';
+  })
 };
 
 const navRegister = () => {
