@@ -30,8 +30,6 @@ jobs:
     uses: ./.github/workflows/call-upload-results.yaml
     needs: run-tests
     with:
-      repo: ${{ github.repository }}
-      ref: ${{ github.ref }}
       artifactName: test-results
       testFile: unit.xml
     secrets: inherit
