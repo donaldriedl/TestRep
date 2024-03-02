@@ -27,7 +27,7 @@ jobs:
 
   upload-results:
     name: Upload Test Results
-    uses: ./.github/workflows/call-upload-tests.yaml
+    uses: ./.github/workflows/call-upload-results.yaml
     needs: run-tests
     with:
       resultType: tests
@@ -37,7 +37,7 @@ jobs:
 
   upload-coverage:
     name: Upload Coverage Results
-    uses: ./.github/workflows/call-upload-tests.yaml
+    uses: ./.github/workflows/call-upload-results.yaml
     needs: run-tests
     with:
       resultType: coverage
