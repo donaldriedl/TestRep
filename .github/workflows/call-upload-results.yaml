@@ -5,7 +5,7 @@ on:
     inputs:
       resultType:
         description: 'Type of result'
-        enum: ['tests', 'coverage']
+        type: string
         required: true
       artifactName:
         description: 'Artifact name'
