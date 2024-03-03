@@ -12,16 +12,16 @@ const parser = new XMLParser({
 
 async function getTestReports(req, res) {
   const testReports = await TestReport.findAll({
-    attributes: ['id', 'resultTime', 'duration', 'totalTests', 'totalFailures', 'totalErrors', 'totalSkipped'],
+    attributes: ['id', 'resultTime', 'duration', 'totalTests', 'totalFailures', 'totalErrors', 'totalSkipped', 'createdAt'],
     where: { 
       branchId: req.params.branchId,
-      '$Branch.repoId$': req.params.repoId,
       '$Branch.Repo.organizationId$': req.user.organizationId
     },
     include: [
       {
         model: Branch,
         attributes: [],
+        where: { id: req.params.branchId },
         include: [
           {
             model: Repo,
@@ -34,6 +34,13 @@ async function getTestReports(req, res) {
 
   if (!testReports.length) {
     return res.status(404).json({ message: 'Test Reports not found' });
+  }
+
+  for (const report of testReports) {
+    if (report.resultTime) {
+      report.resultTime = new Date(report.resultTime).toISOString();
+    }
+    report.createdAt = new Date(report.createdAt).toISOString();
   }
 
   return res.json({ testReports });
@@ -114,6 +121,102 @@ async function getOrganizationTestSummary(req) {
     report.totalPassed = Number(report.totalTests) - (Number(report.totalFailures) + Number(report.totalErrors) + Number(report.totalSkipped));
   }
   console.log(jsonReports);
+
+  return jsonReports;
+}
+
+async function getRepoTestSummary(req) {
+  const repoId = req.params.repoId;
+  const lastThirtyDays = new Date();
+  lastThirtyDays.setDate(lastThirtyDays.getDate() - 60);
+
+  const testReports = await TestReport.findAll({
+    attributes: [
+      [literal('DATE(TestReport.createdAt)'), 'date'],
+      [literal('AVG(COALESCE(totalTests, 0))'), 'totalTests'],
+      [literal('AVG(COALESCE(totalFailures, 0))'), 'totalFailures'],
+      [literal('AVG(COALESCE(totalErrors, 0))'), 'totalErrors'],
+      [literal('AVG(COALESCE(totalSkipped, 0))'), 'totalSkipped'],
+    ],
+    where: {
+      createdAt: { [Op.gte]: lastThirtyDays },
+      '$Branch.repoId$': repoId,
+      '$Branch.Repo.organizationId$': req.user.organizationId
+    },
+    include: [
+      {
+        model: Branch,
+        attributes: [],
+        where: { repoId },
+        include: [
+          {
+            model: Repo,
+            attributes: [],
+            where: { organizationId: req.user.organizationId }
+          }
+        ]
+      },
+    ],
+    group: ['date']
+  });
+
+  if (!testReports.length) {
+    return null;
+  }
+
+  let jsonReports = testReports.map(report => report.toJSON());
+  for (const report of jsonReports) {
+    report.date = new Date(report.date).toISOString();
+    report.totalPassed = Number(report.totalTests) - (Number(report.totalFailures) + Number(report.totalErrors) + Number(report.totalSkipped));
+  }
+
+  return jsonReports;
+}
+
+async function getBranchTestSummary(req) {
+  const branchId = req.params.branchId;
+  const lastThirtyDays = new Date();
+  lastThirtyDays.setDate(lastThirtyDays.getDate() - 60);
+
+  const testReports = await TestReport.findAll({
+    attributes: [
+      [literal('DATE(TestReport.createdAt)'), 'date'],
+      [literal('AVG(COALESCE(totalTests, 0))'), 'totalTests'],
+      [literal('AVG(COALESCE(totalFailures, 0))'), 'totalFailures'],
+      [literal('AVG(COALESCE(totalErrors, 0))'), 'totalErrors'],
+      [literal('AVG(COALESCE(totalSkipped, 0))'), 'totalSkipped'],
+    ],
+    where: {
+      createdAt: { [Op.gte]: lastThirtyDays },
+      branchId,
+      '$Branch.Repo.organizationId$': req.user.organizationId
+    },
+    include: [
+      {
+        model: Branch,
+        attributes: [],
+        where: { id: branchId },
+        include: [
+          {
+            model: Repo,
+            attributes: [],
+            where: { organizationId: req.user.organizationId }
+          }
+        ]
+      },
+    ],
+    group: ['date']
+  });
+
+  if (!testReports.length) {
+    return null;
+  }
+
+  let jsonReports = testReports.map(report => report.toJSON());
+  for (const report of jsonReports) {
+    report.date = new Date(report.date).toISOString();
+    report.totalPassed = Number(report.totalTests) - (Number(report.totalFailures) + Number(report.totalErrors) + Number(report.totalSkipped));
+  }
 
   return jsonReports;
 }
@@ -203,6 +306,8 @@ async function insertTests(req, res, organizationId) {
 module.exports = {
   getTestReports,
   getTestDetails,
+  getBranchTestSummary,
   getOrganizationTestSummary,
+  getRepoTestSummary,
   insertTests
 };

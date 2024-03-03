@@ -45,7 +45,7 @@
   });
 
   async function generateTestChart() {
-    const tests = props.testData.tests;
+    const tests = props.testData.tests.filter(test => test.totalPassed !== null);
     const passedTests = tests.map(test => test.totalPassed);
     const failedTests = tests.map(test => test.totalFailures);
     const errors = tests.map(test => test.totalErrors);
@@ -97,7 +97,7 @@
   }
 
   async function generateCoverageChart() {
-    const coverage = props.testData.coverage;
+    const coverage = props.testData.coverage.filter(test => test.lineRate !== null);
     const lineRate = coverage.map(cov => cov.lineRate);
     const branchRate = coverage.map(cov => cov.branchRate);
     const labels = coverage.map(cov => formatDate(cov.date));

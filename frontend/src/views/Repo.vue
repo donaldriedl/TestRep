@@ -1,12 +1,12 @@
 <template>
   <v-container class="fill-height">
     <v-responsive class="d-flex align-top text-center fill-height">
-      <template v-if="testDataLoaded && repoDataLoaded">
-        <Dashboard :test-data="testData" summary-type="Organization" />
-        <DataList :repo-data="repoData" data-type="Repositories" />
+      <template v-if="testDataLoaded && branchDataLoaded">
+        <Dashboard :test-data="testData" summary-type="Repository" />
+        <DataList :repo-data="branchData" data-type="Branches" />
       </template>
     </v-responsive>
-  </v-container>
+  </v-container>  
 </template>
 
 <script setup>
@@ -16,39 +16,37 @@
   import { useRouter } from 'vue-router';
 
   const router = useRouter();
+  const repoId = router.currentRoute.value.params.id;
   const testData = ref({});
-  const repoData = ref({});
+  const branchData = ref({});
   const testDataLoaded = ref(false);
-  const repoDataLoaded = ref(false);
+  const branchDataLoaded = ref(false);
 
   onMounted(() => {
-    getOrganizationSummary();
-    getOrganizationRepoData();
+    getRepoSummary();
+    getRepoBranchData();
   });
 
-  async function getOrganizationSummary() {
-    fetch('http://localhost:3001/organizations/summary', {
+  async function getRepoSummary() {
+    const response = await fetch(`http://localhost:3001/repos/${repoId}/summary`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json'
       },
       credentials: 'include'
-    }).then(response => {
-      if (response.status === 401) {
-        router.push('/login');
-      } else {
-        return response.json();
-      }
-    }).then(data => {
+    })
+    
+    if (response.status === 401) {
+      router.push('/login');
+    } else {
+      const data = await response.json();
       testData.value = data;
       testDataLoaded.value = true;
-    }).catch(error => {
-      console.error('Error:', error);
-    });
+    }
   }
 
-  async function getOrganizationRepoData() {
-    const response = await fetch('http://localhost:3001/repos', {
+  async function getRepoBranchData() {
+    const response = await fetch(`http://localhost:3001/repos/${repoId}/branches`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json'
@@ -60,8 +58,9 @@
       router.push('/login');
     } else {
       const data = await response.json();
-      repoData.value = data;
-      repoDataLoaded.value = true;
+      branchData.value = data;
+      branchDataLoaded.value = true;
     }
   }
+
 </script>

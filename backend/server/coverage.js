@@ -11,16 +11,16 @@ const parser = new XMLParser({
 
 async function getCoverageReports(req, res) {
   const coverageReports = await CoverageReport.findAll({
-    attributes: ['id', 'resultTime', 'branchRate', 'lineRate', 'totalLines', 'validLines', 'complexity'],
+    attributes: ['id', 'resultTime', 'branchRate', 'lineRate', 'totalLines', 'validLines', 'complexity', 'createdAt'],
     where: { 
       branchId: req.params.branchId,
-      '$Branch.repoId$': req.params.repoId,
       '$Branch.Repo.organizationId$': req.user.organizationId
     },
     include: [
       {
         model: Branch,
         attributes: [],
+        where: { id: req.params.branchId },
         include: [
           {
             model: Repo,
@@ -33,6 +33,13 @@ async function getCoverageReports(req, res) {
 
   if (!coverageReports.length) {
     return res.status(404).json({ message: 'Coverage Reports not found' });
+  }
+
+  for (const report of coverageReports) {
+    if (report.resultTime) {
+      report.resultTime = new Date(report.resultTime).toISOString();
+    }
+    report.createdAt = new Date(report.createdAt).toISOString();
   }
 
   return res.json({ coverageReports });
@@ -105,7 +112,93 @@ async function getOrganizationCoverageSummary(req) {
     report.date = new Date(report.date).toISOString();
   }
 
-  console.log(jsonReport);
+  return jsonReport;
+}
+
+async function getRepoCoverageSummary(req) {
+  const repoId = req.params.repoId;
+  const lastThirtyDays = new Date();
+  lastThirtyDays.setDate(lastThirtyDays.getDate() - 30);
+
+  const coverageReports = await CoverageReport.findAll({
+    attributes: [
+      [literal('DATE(CoverageReport.createdAt)'), 'date'],
+      [literal('AVG(branchRate)'), 'branchRate'],
+      [literal('AVG(lineRate)'), 'lineRate'],
+    ],
+    where: {
+      createdAt: { [Op.gte]: lastThirtyDays },
+      '$Branch.repoId$': repoId,
+      '$Branch.Repo.organizationId$': req.user.organizationId
+    },
+    include: [
+      {
+        model: Branch,
+        attributes: [],
+        include: [
+          {
+            model: Repo,
+            attributes: [],
+            where: { organizationId: req.user.organizationId }
+          }
+        ]
+      }
+    ],
+    group: ['date']
+  });
+
+  if (!coverageReports.length) {
+    return null;
+  }
+
+  const jsonReport = coverageReports.map(report => report.toJSON());
+  for (const report of jsonReport) {
+    report.date = new Date(report.date).toISOString();
+  }
+
+  return jsonReport;
+}
+
+async function getBranchCoverageSummary(req) {
+  const branchId = req.params.branchId;
+  const lastThirtyDays = new Date();
+  lastThirtyDays.setDate(lastThirtyDays.getDate() - 30);
+
+  const coverageReports = await CoverageReport.findAll({
+    attributes: [
+      [literal('DATE(CoverageReport.createdAt)'), 'date'],
+      [literal('AVG(branchRate)'), 'branchRate'],
+      [literal('AVG(lineRate)'), 'lineRate'],
+    ],
+    where: {
+      createdAt: { [Op.gte]: lastThirtyDays },
+      branchId,
+      '$Branch.Repo.organizationId$': req.user.organizationId
+    },
+    include: [
+      {
+        model: Branch,
+        attributes: [],
+        include: [
+          {
+            model: Repo,
+            attributes: [],
+            where: { organizationId: req.user.organizationId }
+          }
+        ]
+      }
+    ],
+    group: ['date']
+  });
+
+  if (!coverageReports.length) {
+    return null;
+  }
+
+  const jsonReport = coverageReports.map(report => report.toJSON());
+  for (const report of jsonReport) {
+    report.date = new Date(report.date).toISOString();
+  }
 
   return jsonReport;
 }
@@ -176,6 +269,8 @@ async function uploadCoverageReport(req, res, organizationId) {
 module.exports = {
   getCoverageReports,
   getCoverageDetails,
+  getBranchCoverageSummary,
   getOrganizationCoverageSummary,
+  getRepoCoverageSummary,
   uploadCoverageReport
 };

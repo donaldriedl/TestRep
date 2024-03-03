@@ -40,6 +40,30 @@ const routes = [
         props: true,
       },
     ],
+  },
+  {
+    path: '/repo/:id',
+    component: () => import('@/layouts/default/Default.vue'),
+    children: [
+      {
+        path: '',
+        name: 'Repositories',
+        component: () => import('@/views/Repo.vue'),
+        props: true,
+      },
+    ],
+  },
+  {
+    path: '/branch/:id',
+    component: () => import('@/layouts/default/Default.vue'),
+    children: [
+      {
+        path: '',
+        name: 'Branches',
+        component: () => import('@/views/Branch.vue'),
+        props: true,
+      },
+    ],
   }
 ]
 

@@ -7,7 +7,7 @@ const { createUser, getOrganizations, getOrganizationByUuid } = require('./serve
 const { getRepos, getBranches } = require('./server/repos.js');
 const { getTestReports, getTestDetails, insertTests } = require('./server/tests.js');
 const { getCoverageReports, getCoverageDetails, uploadCoverageReport } = require('./server/coverage.js');
-const { getOrganizationSummary } = require('./server/reports.js');
+const { getOrganizationSummary, getRepoSummary, getBranchSummary } = require('./server/reports.js');
 
 const app = express();
 const port = 3001;
@@ -82,6 +82,13 @@ app.get('/repos', (req, res) => {
   getRepos(req, res);
 });
 
+app.get('/repos/:repoId/summary', (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ message: 'Unauthorized' });
+  }
+  getRepoSummary(req, res);
+});
+
 app.get('/repos/:repoId/branches', (req, res) => {
   if (!req.user) {
     return res.status(401).json({ message: 'Unauthorized' });
@@ -92,14 +99,21 @@ app.get('/repos/:repoId/branches', (req, res) => {
 /**
  * Test Reports and Test Details
  */
-app.get('/:repoId/:branchId/tests', (req, res) => {
+app.get('/branches/:branchId/summary', (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ message: 'Unauthorized' });
+  }
+  getBranchSummary(req, res);
+});
+
+app.get('/branches/:branchId/tests', (req, res) => {
   if (!req.user) {
     return res.status(401).json({ message: 'Unauthorized' });
   }
   getTestReports(req, res);
 });
 
-app.get('/:repoId/:branchId/tests/:reportId/details', (req, res) => {
+app.get('/tests/:reportId/details', (req, res) => {
   if (!req.user) {
     return res.status(401).json({ message: 'Unauthorized' });
   }
@@ -121,14 +135,14 @@ app.post('/:repoName/:branchName/tests', upload.single('file'), async (req, res)
 /**
  * Coverage Reports and Coverage Details
  */
-app.get('/:repoId/:branchId/coverage', (req, res) => {
+app.get('/branches/:branchId/coverage', (req, res) => {
   if (!req.user) {
     return res.status(401).json({ message: 'Unauthorized' });
   }
   getCoverageReports(req, res);
 });
 
-app.get('/:repoId/:branchId/coverage/:reportId/details', (req, res) => {
+app.get('/coverage/:reportId/details', (req, res) => {
   if (!req.user) {
     return res.status(401).json({ message: 'Unauthorized' });
   }

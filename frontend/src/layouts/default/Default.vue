@@ -38,7 +38,9 @@
     if (response.status === 200) {
       const data = await response.json()
       store.commit('setUser', data);
-      router.push('/dashboard');
+      if (router.currentRoute.value.path === '/') {
+        router.push('/dashboard');
+      }
     } else {
       router.push('/login');
     }
