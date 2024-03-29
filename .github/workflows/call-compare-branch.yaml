@@ -27,16 +27,17 @@ jobs:
         run: |
           result=$(curl --location 'http://localhost:3001/${{ steps.repo.outputs.repo }}/${{ steps.branch.outputs.branch }}/compare' \
             --header 'x-organization-uuid: ${{ secrets.ORGANIZATION_UUID }}')
-          parsed_result=$(echo "$result" | jq .)
+          parsed_result=$(echo "$result" | jq . | base64)
           echo "::set-output name=parsed_result::$parsed_result"
       - name: Comment on PR
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
+            const parsedResults = Buffer.from('${{ steps.branch-compare.outputs.parsed_result }}', 'base64').toString('utf-8');
             github.rest.issues.createComment({
               issue_number: ${{ inputs.pr_number }},
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `Branch comparison results: ${{ steps.branch-compare.outputs.parsed_result }}`
+              body: `Branch comparison results: ${parsedResults}`
             })
