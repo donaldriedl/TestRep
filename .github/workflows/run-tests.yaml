@@ -51,3 +51,7 @@ jobs:
     if: github.event_name == 'pull_request'
     needs: [run-tests, upload-results, upload-coverage]
     secrets: inherit
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
