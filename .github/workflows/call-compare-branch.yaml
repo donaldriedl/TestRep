@@ -38,5 +38,5 @@ jobs:
               issue_number: ${{ inputs.pr_number }},
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `Branch comparison results: ${context.payload.workflow_run.outputs.parsed_result}`
+              body: `Branch comparison results: ${{ steps.branch-compare.outputs.parsed_result }}`
             })
