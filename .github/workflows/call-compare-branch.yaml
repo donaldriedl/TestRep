@@ -33,10 +33,21 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const fs = require('fs');
-            const parsedResults = fs.readFileSync('result.json', 'utf8');
+            const results = JSON.parse(fs.readFileSync('result.json', 'utf8'));
+
+            const table = `
+              |              | PR Branch | Primary Branch | Difference |
+              |--------------|-----------|----------------|------------|
+              | Passed Tests | ${results.tests.branch.totalPassed} | ${results.tests.primaryBranch.totalPassed} | ${results.tests.difference.totalPassed} |
+              | Failed Tests | ${results.tests.branch.totalFailures} | ${results.tests.primaryBranch.totalFailures} | ${results.tests.difference.totalFailures} |
+              | Error Tests  | ${results.tests.branch.totalErrors} | ${results.tests.primaryBranch.totalErrors} | ${results.tests.difference.totalErrors} |
+              | Skipped Tests| ${results.tests.branch.totalSkipped} | ${results.tests.primaryBranch.totalSkipped} | ${results.tests.difference.totalSkipped} |
+              | Line Rate    | ${results.coverage.branch.lineRate} | ${results.coverage.primaryBranch.lineRate} | ${results.coverage.difference.lineRate} |
+              | Branch Rate  | ${results.coverage.branch.branchRate} | ${results.coverage.primaryBranch.branchRate} | ${results.coverage.difference.branchRate} |
+            `;
             github.rest.issues.createComment({
               issue_number: ${{ inputs.pr_number }},
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `Branch comparison results: ${parsedResults}`
+              body: `Branch comparison results:\n${table}`
             })
