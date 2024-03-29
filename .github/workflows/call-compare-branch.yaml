@@ -33,7 +33,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const fs = require('fs');
-            const parsedResult = fs.readFileSync('result.json', 'utf8');
+            const parsedResults = fs.readFileSync('result.json', 'utf8');
             github.rest.issues.createComment({
               issue_number: ${{ inputs.pr_number }},
               owner: context.repo.owner,
