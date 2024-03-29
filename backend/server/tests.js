@@ -1,5 +1,5 @@
 const { XMLParser, XMLValidator } = require('fast-xml-parser');
-const { Op, literal } = require('sequelize');
+const { Op, literal, Sequelize } = require('sequelize');
 const TestReport = require('../models/test_report.js');
 const TestSuite = require('../models/test_suite.js');
 const TestCase = require('../models/test_case.js');
@@ -36,47 +36,79 @@ async function getTestReports(req, res) {
     return res.status(404).json({ message: 'Test Reports not found' });
   }
 
+  let tests = [];
+
   for (const report of testReports) {
     if (report.resultTime) {
       report.resultTime = new Date(report.resultTime).toISOString();
     }
     report.createdAt = new Date(report.createdAt).toISOString();
+
+    const data = {
+      id: report.id,
+      date: report.resultTime ? report.resultTime : report.createdAt,
+      totalPassed: report.totalTests - (report.totalFailures + report.totalErrors + report.totalSkipped),
+      totalFailures: report.totalFailures,
+      totalErrors: report.totalErrors,
+      totalSkipped: report.totalSkipped,
+    }
+    tests.push(data);
   }
 
-  return res.json({ testReports });
+  tests.sort((a, b) => new Date(b.date) - new Date(a.date));
+  return res.json(tests);
 }
 
 async function getTestDetails(req, res) {
-  const TestDetails = await TestSuite.findAll({
-    attributes: ['id', 'suiteName', 'duration', 'totalTests', 'totalFailures', 'totalErrors', 'totalSkipped'],
-    where: { testReportId: req.params.reportId },
-    include: {
-      model: TestReport,
-      attributes: [],
-      where: { branchId: req.params.branchId },
-      include: {
+  const testDetails = await TestReport.findOne({
+    attributes: ['id', 'resultTime', 'duration', 'totalTests', 'totalFailures', 'totalErrors', 'totalSkipped', 'createdAt'],
+    where: { 
+      id: req.params.reportId,
+      '$Branch.Repo.organizationId$': req.user.organizationId,
+    },
+    include: [
+      {
         model: Branch,
         attributes: [],
-        where: { repoId: req.params.repoId },
-        include: {
-          model: Repo,
-          attributes: [],
-          where: { organizationId: req.user.organizationId }
-        }
+        include: [
+          {
+            model: Repo,
+            attributes: []
+          }
+        ]
+      },
+      {
+        model: TestSuite,
+        attributes: ['id', 'suiteName', 'duration', 'totalTests', 'totalFailures', 'totalErrors', 'totalSkipped'],
+        where: { testReportId: req.params.reportId },
+        include: [
+          {
+            model: TestCase,
+            attributes: ['id', 'caseName', 'className', 'duration', 'result', 'failureMessage', 'failureType', 'stackTrace'],
+            where: { testSuiteId: Sequelize.col('TestSuites.id') }
+          }
+        ]
       }
-    },
-    include: {
-      model: TestCase,
-      attributes: ['caseName', 'className', 'duration', 'result', 'failureMessage', 'failureType', 'stackTrace']
-    },
-    order: [[TestCase, 'id', 'ASC']]
+    ]
   });
 
-  if (!TestDetails.length) {
+  if (!testDetails) {
     return res.status(404).json({ message: 'Test Details not found' });
   }
 
-  return res.json({ TestDetails });
+  if (testDetails.resultTime) {
+    testDetails.resultTime = new Date(testDetails.resultTime).toISOString();
+  }
+  testDetails.createdAt = new Date(testDetails.createdAt).toISOString();
+
+  let details = testDetails.toJSON();
+
+  details.date = testDetails.resultTime ? testDetails.resultTime : testDetails.createdAt;
+  details.totalPassed = testDetails.totalTests - (testDetails.totalFailures + testDetails.totalErrors + testDetails.totalSkipped);
+  delete details.createdAt;
+  delete details.resultTime;
+
+  return res.json(details);
 }
 
 async function getOrganizationTestSummary(req) {
@@ -221,6 +253,45 @@ async function getBranchTestSummary(req) {
   return jsonReports;
 }
 
+async function compareBranchTests(branchId, primaryBranchId) {
+  const primaryBranchData = await TestReport.findOne({
+    where: {
+      branchId: primaryBranchId,
+    },
+    order: [['createdAt', 'DESC']]
+  });
+
+  const branchData = await TestReport.findOne({
+    where: {
+      branchId,
+    },
+    order: [['createdAt', 'DESC']]
+  });
+
+  const response = {
+    primaryBranch: {
+      totalPassed: primaryBranchData.totalTests - (primaryBranchData.totalFailures + primaryBranchData.totalErrors + primaryBranchData.totalSkipped),
+      totalFailures: primaryBranchData.totalFailures,
+      totalErrors: primaryBranchData.totalErrors,
+      totalSkipped: primaryBranchData.totalSkipped,
+    },
+    branch: {
+      totalPassed: branchData.totalTests - (branchData.totalFailures + branchData.totalErrors + branchData.totalSkipped),
+      totalFailures: branchData.totalFailures,
+      totalErrors: branchData.totalErrors,
+      totalSkipped: branchData.totalSkipped,
+    },
+    difference: {
+      totalPassed: branchData.totalTests - (branchData.totalFailures + branchData.totalErrors + branchData.totalSkipped) - (primaryBranchData.totalTests - (primaryBranchData.totalFailures + primaryBranchData.totalErrors + primaryBranchData.totalSkipped)),
+      totalFailures: branchData.totalFailures - primaryBranchData.totalFailures,
+      totalErrors: branchData.totalErrors - primaryBranchData.totalErrors,
+      totalSkipped: branchData.totalSkipped - primaryBranchData.totalSkipped,
+    }
+  }
+
+  return response;
+}
+
 async function insertTests(req, res, organizationId) {
   if (!req.file) {
     return res.status(400).json({ message: 'No file uploaded' });
@@ -294,7 +365,7 @@ async function insertTests(req, res, organizationId) {
         result: testCase.failure ? 'failure' : 'success',
         failureMessage: testCase.failure ? testCase.failure['@_message'] : null,
         failureType: testCase.failure ? testCase.failure['@_type'] : null,
-        stackTrace: testCase.failure ? testCase.failure['#text'] : null,
+        stackTrace: testCase.failure ? testCase.failure : null,
         testSuiteId: testSuite.id
       });
     }
@@ -304,6 +375,7 @@ async function insertTests(req, res, organizationId) {
 }
 
 module.exports = {
+  compareBranchTests,
   getTestReports,
   getTestDetails,
   getBranchTestSummary,

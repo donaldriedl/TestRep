@@ -15,22 +15,22 @@
       <tr @click="navigateToSub(item.id, )" class="cursor-pointer data-table-row">
         <td class="text-left">{{  item.name }}</td>
         <td>
-          <v-chip color="success" dark>{{ item.totalPassed }}</v-chip>
+          <v-chip class="passed" dark>{{ item.totalPassed }}</v-chip>
         </td>
         <td>
-          <v-chip color="error" dark>{{ item.totalFailures }}</v-chip>
+          <v-chip class="failed" dark>{{ item.totalFailures }}</v-chip>
         </td>
         <td>
-          <v-chip color="error" dark>{{ item.totalErrors }}</v-chip>
+          <v-chip class="error" dark>{{ item.totalErrors }}</v-chip>
         </td>
         <td>
-          <v-chip color="warning" dark>{{ item.totalSkipped }}</v-chip>
+          <v-chip class="skipped" dark>{{ item.totalSkipped }}</v-chip>
         </td>
         <td>
-          <v-chip color="primary" dark>{{ item.lineRate }}</v-chip>
+          <v-chip dark>{{ item.lineRate }}</v-chip>
         </td>
         <td>
-          <v-chip color="primary" dark>{{ item.branchRate }}</v-chip>
+          <v-chip dark>{{ item.branchRate }}</v-chip>
         </td>
       </tr>
     </template>
