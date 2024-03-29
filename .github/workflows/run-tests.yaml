@@ -50,6 +50,8 @@ jobs:
     uses: ./.github/workflows/call-compare-branch.yaml
     if: github.event_name == 'pull_request'
     needs: [run-tests, upload-results, upload-coverage]
+    with:
+      pr_number: ${{ github.event.number }}
     secrets: inherit
     permissions:
       contents: read
