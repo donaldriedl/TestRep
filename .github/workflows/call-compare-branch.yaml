@@ -34,7 +34,7 @@ jobs:
           script: |
             const fs = require('fs');
             const results = JSON.parse(fs.readFileSync('result.json', 'utf8'));
-
+ 
             const table = `
               |              | PR Branch | Primary Branch | Difference |
               |--------------|-----------|----------------|------------|
