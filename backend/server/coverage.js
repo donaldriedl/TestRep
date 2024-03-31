@@ -236,18 +236,18 @@ async function compareBranchCoverage(branchId, primaryBranchId) {
   });
 
   const primaryBranch = primaryBranchData ? {
-    branchRate: primaryBranchData.branchRate,
-    lineRate: primaryBranchData.lineRate
+    branchRate: `${(primaryBranchData.branchRate * 100).toFixed(2)}%`,
+    lineRate: `${(primaryBranchData.lineRate * 100).toFixed(2)}%`
   } : null;
 
   const branch = branchData ? {
-    branchRate: branchData.branchRate,
-    lineRate: branchData.lineRate
+    branchRate: `${(branchData.branchRate * 100).toFixed(2)}%`,
+    lineRate: `${(branchData.lineRate * 100).toFixed(2)}%`
   } : null;
 
   const difference = primaryBranch && branch ? {
-    branchRate: branch.branchRate - primaryBranch.branchRate,
-    lineRate: branch.lineRate - primaryBranch.lineRate
+    branchRate: `${((branchData.branchRate - primaryBranchData.branchRate) * 100).toFixed(2)}%`,
+    lineRate: `${((branchData.lineRate - primaryBranchData.lineRate) * 100).toFixed(2)}%`
   } : null;
   
   return { primaryBranch, branch, difference };

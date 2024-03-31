@@ -273,13 +273,13 @@ async function compareBranchTests(branchId, primaryBranchId) {
       totalPassed: primaryBranchData.totalTests - (primaryBranchData.totalFailures + primaryBranchData.totalErrors + primaryBranchData.totalSkipped),
       totalFailures: primaryBranchData.totalFailures,
       totalErrors: primaryBranchData.totalErrors,
-      totalSkipped: primaryBranchData.totalSkipped,
+      totalSkipped: primaryBranchData.totalSkipped ?? 0,
     },
     branch: {
       totalPassed: branchData.totalTests - (branchData.totalFailures + branchData.totalErrors + branchData.totalSkipped),
       totalFailures: branchData.totalFailures,
       totalErrors: branchData.totalErrors,
-      totalSkipped: branchData.totalSkipped,
+      totalSkipped: branchData.totalSkipped ?? 0,
     },
     difference: {
       totalPassed: branchData.totalTests - (branchData.totalFailures + branchData.totalErrors + branchData.totalSkipped) - (primaryBranchData.totalTests - (primaryBranchData.totalFailures + primaryBranchData.totalErrors + primaryBranchData.totalSkipped)),
