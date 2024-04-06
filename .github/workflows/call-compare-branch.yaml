@@ -1,0 +1,53 @@
+name: Compare Branches
+
+on:
+  workflow_call:
+    inputs:
+      pr_number:
+        required: true
+        type: number
+
+jobs:
+  compare-pr-results:
+    name: Compare PR Branch to Primary
+    runs-on: self-hosted
+    steps:
+      - name: Get Repo Name
+        id: repo
+        run: echo ::set-output name=repo::${GITHUB_REPOSITORY#$GITHUB_REPOSITORY_OWNER/}
+      - name: Get Branch Name
+        id: branch
+        run: echo ::set-output name=branch::${{ github.head_ref }}
+      - name: Install JQ
+        run: |
+          sudo apt-get update
+          sudo apt-get install jq
+      - name: Compare Branches
+        run: |
+          result=$(curl --location 'http://localhost:3001/${{ steps.repo.outputs.repo }}/${{ steps.branch.outputs.branch }}/compare' \
+            --header 'x-organization-uuid: ${{ secrets.ORGANIZATION_UUID }}')
+          echo "$result" | jq . > result.json
+      - name: Comment on PR
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const results = JSON.parse(fs.readFileSync('result.json', 'utf8'));
+ 
+            const table = `
+              |              | PR Branch | Primary Branch | Difference |
+              |--------------|-----------|----------------|------------|
+              | Passed Tests | ${results.tests.branch.totalPassed} | ${results.tests.primaryBranch.totalPassed} | ${results.tests.difference.totalPassed} |
+              | Failed Tests | ${results.tests.branch.totalFailures} | ${results.tests.primaryBranch.totalFailures} | ${results.tests.difference.totalFailures} |
+              | Error Tests  | ${results.tests.branch.totalErrors} | ${results.tests.primaryBranch.totalErrors} | ${results.tests.difference.totalErrors} |
+              | Skipped Tests| ${results.tests.branch.totalSkipped} | ${results.tests.primaryBranch.totalSkipped} | ${results.tests.difference.totalSkipped} |
+              | Line Rate    | ${results.coverage.branch.lineRate} | ${results.coverage.primaryBranch.lineRate} | ${results.coverage.difference.lineRate} |
+              | Branch Rate  | ${results.coverage.branch.branchRate} | ${results.coverage.primaryBranch.branchRate} | ${results.coverage.difference.branchRate} |
+            `;
+            github.rest.issues.createComment({
+              issue_number: ${{ inputs.pr_number }},
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `Branch comparison results:\n${table}`
+            })

@@ -5,7 +5,7 @@
         <v-card-title class="bg-secondary"> Login </v-card-title>
         <v-divider></v-divider>
         <v-card-text>
-          <v-text-field v-model="emailField" label="Email" type="email" variant="underlined" />
+          <v-text-field v-model="emailField" label="Email" type="email" variant="underlined" autofocus />
           <v-text-field v-model="passwordField" label="Password" type="password" variant="underlined" />
           <v-card-actions>
             <v-btn color="primary" @click="login"> Login </v-btn>
@@ -19,7 +19,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { onMounted, onUnmounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useStore } from 'vuex';
 
@@ -30,6 +30,20 @@ const emailField = ref('');
 const passwordField = ref('');
 const snackbar = ref(false);
 const snackbarMessage = ref('');
+
+const handleKeyPress = (event) => {
+  if (event.key === 'Enter' && emailField.value && passwordField.value) {
+    login();
+  }
+};
+
+onMounted(() => {
+  document.addEventListener('keydown', handleKeyPress);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('keydown', handleKeyPress);
+});
 
 const login = () => {
   if (!emailField.value || !passwordField.value) {

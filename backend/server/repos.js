@@ -7,7 +7,7 @@ async function getRepos(req, res) {
   const repos = await Repo.findAll({
     attributes: ['id', 'repoName'],
     where: {
-      organizationId: req.user.organizationId
+      organizationId: req.user.defaultOrgId,
     },
     include: {
       model: Branch,
@@ -63,7 +63,7 @@ async function getRepos(req, res) {
 
 async function getBranches(req, res) {
   const branches = await Branch.findAll({
-    attributes: ['id', 'branchName'],
+    attributes: ['id', 'branchName', 'isPrimary'],
     where: {
       repoId: req.params.repoId
     },
@@ -102,6 +102,7 @@ async function getBranches(req, res) {
     jsonResponse.push({
       id: branch.id,
       name: branch.branchName,
+      isPrimary: branch.isPrimary,
       totalPassed,
       totalFailures,
       totalErrors,
@@ -114,4 +115,86 @@ async function getBranches(req, res) {
   return res.json(jsonResponse);
 }
 
-module.exports = { getRepos, getBranches };
+async function getBranchIdByName(branchName, repoName, orgId) {
+  const repo = await Repo.findOne({
+    attributes: ['id'],
+    where: {
+      organizationId: orgId,
+      repoName,
+    }
+  });
+
+  if (!repo) {
+    return null;
+  }
+
+  const branch = await Branch.findOne({
+    attributes: ['id'],
+    where: {
+      repoId: repo.id,
+      branchName
+    }
+  });
+
+  return branch.id;
+}
+
+async function getPrimaryBranchId(repoName, orgId) {
+  const repo = await Repo.findOne({
+    attributes: ['id'],
+    where: {
+      organizationId: orgId,
+      repoName,
+    }
+  });
+
+  if (!repo) {
+    return null;
+  }
+
+  const branch = await Branch.findOne({
+    attributes: ['id'],
+    where: {
+      repoId: repo.id,
+      isPrimary: true
+    }
+  });
+
+  return branch.id;
+}
+
+async function updatePrimaryBranch(req, res) {
+  const branchId = req.body.primaryBranch;
+  const branch = await Branch.findOne({
+    where: {
+      id: branchId
+    }
+  });
+
+  const repo = await Repo.findOne({
+    where: {
+      id: branch.repoId,
+      organizationId: req.user.defaultOrgId,
+    }
+  });
+
+  if (!branch || !repo) {
+    return res.status(404).json({ message: 'Branch not found' });
+  }
+
+  await Branch.update({ isPrimary: false }, {
+    where: {
+      repoId: branch.repoId
+    }
+  });
+
+  await Branch.update({ isPrimary: true }, {
+    where: {
+      id: req.params.repoId
+    }
+  });
+
+  return res.json({ message: 'Primary branch updated' });
+}
+
+module.exports = { getRepos, getBranches, getBranchIdByName, getPrimaryBranchId, updatePrimaryBranch };

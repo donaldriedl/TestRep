@@ -11,13 +11,12 @@ const User = sequelize.define('User', {
     type: DataTypes.STRING,
     allowNull: false
   },
-  organizationId: {
+  defaultOrgId: {
     type: DataTypes.INTEGER,
     allowNull: false
   }
 });
 
-User.belongsTo(Organization, { foreignKey: 'organizationId' });
-Organization.hasMany(User, { foreignKey: 'organizationId' });
+User.belongsTo(Organization, { foreignKey: 'defaultOrgId' });
 
 module.exports = User;

@@ -2,25 +2,18 @@
   <v-container class="fill-height">
     <v-responsive class="d-flex align-top text-center fill-height">
       <template v-if="summaryDataLoaded && branchTestDataLoaded && branchCoverageDataLoaded">
-        <Dashboard :test-data="testData" summary-type="Branch" />
+        <Dashboard :test-data="summaryData" summary-type="Branch" />
         <v-container>
-          <v-row>
-            <v-col>
-              <DataList :repo-data="testData" data-type="Tests" />
-            </v-col>
-            <v-col>
-              <DataList :repo-data="coverageData" data-type="Coverage" />
-            </v-col>
-          </v-row>
+          <DoubleDataList :test-data="testData" :coverage-data="coverageData" />
         </v-container>
       </template>
     </v-responsive>
-  </v-container>  
+  </v-container>
 </template>
 
 <script setup>
   import Dashboard from '@/components/Dashboard.vue'
-  import DataList from '@/components/DataList.vue'
+  import DoubleDataList from '@/components/DoubleDataList.vue';
   import { ref, onMounted } from 'vue';
   import { useRouter } from 'vue-router';
 
@@ -70,9 +63,11 @@
       router.push('/login');
     } else {
       const data = await response.json();
+      data.forEach((test) => {
+        test.date = formatDate(test.date);
+      });
       testData.value = data;
       branchTestDataLoaded.value = true;
-      console.log(data);
     }
   }
 
@@ -87,12 +82,30 @@
     
     if (response.status === 401) {
       router.push('/login');
+    } else if (response.status === 404) {
+      branchCoverageDataLoaded.value = true;
+      coverageData.value = [];
     } else {
       const data = await response.json();
+      data.forEach((coverage) => {
+        coverage.date = formatDate(coverage.date);
+        coverage.lineRate = `${(coverage.lineRate * 100).toFixed(2)}%`;
+        coverage.branchRate = `${(coverage.branchRate * 100).toFixed(2)}%`;
+      });
       coverageData.value = data;
       branchCoverageDataLoaded.value = true;
-      console.log(data);
     }
+  }
+
+  function formatDate(date) {
+    const formattedDate = new Date(date).toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: 'numeric'
+    });
+    return formattedDate;
   }
 
 </script>

@@ -9,21 +9,27 @@
         <v-card elevation="4">
           <v-card-title class="bg-secondary"> {{ props.summaryType }} Test Summary </v-card-title>
           <v-divider></v-divider>
-          <div class="mx-4 my-4" style="height: 300px;"><canvas id="test-summary"></canvas></div>
+          <div class="mx-4 my-4" style="height: 300px;">
+            <canvas id="test-summary" v-if="testDataExists"></canvas>
+            <v-alert v-else>No test data available.</v-alert>
+          </div>
         </v-card>
       </v-col>
       <v-col>
         <v-card>
           <v-card-title class="bg-secondary"> {{ props.summaryType }} Coverage Summary </v-card-title>
           <v-divider></v-divider>
-          <div class="mx-4 my-4" style="height: 300px;"><canvas id="coverage-summary"></canvas></div>
+          <div class="mx-4 my-4" style="height: 300px;">
+            <canvas id="coverage-summary" v-if="coverageDataExists"></canvas>
+            <v-alert v-else>No coverage data available.</v-alert>
+          </div>
         </v-card>
       </v-col>
     </v-row>
 </template>
 
 <script setup>
-  import { ref, onMounted, defineProps } from 'vue';
+  import { onMounted, defineProps, nextTick, ref } from 'vue';
   import { Chart, LineController, ArcElement, CategoryScale, LinearScale, PointElement, LineElement, Legend, Tooltip } from 'chart.js';
 
   const props = defineProps({
@@ -37,14 +43,24 @@
     }
   });
 
+  const testDataExists = ref(false);
+  const coverageDataExists = ref(false);
+
   Chart.register(LineController, ArcElement, CategoryScale, LinearScale, PointElement, LineElement, Legend, Tooltip);
 
   onMounted(() => {
-    generateTestChart();
-    generateCoverageChart();
+    if (props.testData.tests) {
+      testDataExists.value = true;
+      generateTestChart();
+    }
+    if (props.testData.coverage) {
+      coverageDataExists.value = true;
+      generateCoverageChart();
+    }
   });
 
   async function generateTestChart() {
+    await nextTick();
     const tests = props.testData.tests.filter(test => test.totalPassed !== null);
     const passedTests = tests.map(test => test.totalPassed);
     const failedTests = tests.map(test => test.totalFailures);
@@ -97,6 +113,7 @@
   }
 
   async function generateCoverageChart() {
+    await nextTick();
     const coverage = props.testData.coverage.filter(test => test.lineRate !== null);
     const lineRate = coverage.map(cov => cov.lineRate);
     const branchRate = coverage.map(cov => cov.branchRate);

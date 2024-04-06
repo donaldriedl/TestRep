@@ -64,6 +64,30 @@ const routes = [
         props: true,
       },
     ],
+  },
+  {
+    path: '/test/:id',
+    component: () => import('@/layouts/default/Default.vue'),
+    children: [
+      {
+        path: '',
+        name: 'Tests',
+        component: () => import('@/views/Test.vue'),
+        props: true,
+      },
+    ],
+  },
+  {
+    path: '/coverage/:id',
+    component: () => import('@/layouts/default/Default.vue'),
+    children: [
+      {
+        path: '',
+        name: 'Coverage',
+        component: () => import('@/views/Coverage.vue'),
+        props: true,
+      },
+    ],
   }
 ]
 

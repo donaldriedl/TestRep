@@ -1,5 +1,6 @@
-const { getOrganizationTestSummary, getRepoTestSummary, getBranchTestSummary } = require('./tests.js');
-const { getOrganizationCoverageSummary, getRepoCoverageSummary, getBranchCoverageSummary } = require('./coverage.js');
+const { getBranchIdByName, getPrimaryBranchId } = require('./repos.js');
+const { compareBranchTests, getOrganizationTestSummary, getRepoTestSummary, getBranchTestSummary } = require('./tests.js');
+const { compareBranchCoverage, getOrganizationCoverageSummary, getRepoCoverageSummary, getBranchCoverageSummary } = require('./coverage.js');
 
 async function getOrganizationSummary(req, res) {
   const tests = await getOrganizationTestSummary(req);
@@ -19,8 +20,26 @@ async function getBranchSummary(req, res) {
   res.json({ tests, coverage });
 }
 
+async function getBranchCompare(req, res, orgId) {
+  const primaryBranchId = await getPrimaryBranchId(req.params.repoName, orgId);
+  console.log(`primaryBranchId: ${primaryBranchId}`)
+  const branchId = await getBranchIdByName(req.params.branchName, req.params.repoName, orgId);
+  if (!primaryBranchId) {
+    return res.status(404).json({ message: 'Primary branch not found' });
+  }
+
+  if (req.params.branchId === primaryBranchId) {
+    return res.status(400).json({ message: 'Cannot compare a branch to itself' });
+  }
+
+  const tests = await compareBranchTests(branchId, primaryBranchId, orgId);
+  const coverage = await compareBranchCoverage(branchId, primaryBranchId, orgId);
+  res.json({ tests, coverage });
+}
+
 module.exports = {
   getOrganizationSummary,
   getRepoSummary,
-  getBranchSummary
+  getBranchSummary,
+  getBranchCompare
 }

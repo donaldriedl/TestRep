@@ -13,3 +13,19 @@ tr.v-data-table__tr:hover {
   background-color: rgba(0, 0, 0, 0.1);
   cursor: pointer;
 }
+
+.passed .v-chip__content {
+  color: green;
+}
+
+.failed .v-chip__content {
+  color: darkorange;
+}
+
+.error .v-chip__content {
+  color: red;
+}
+
+.skipped .v-chip__content {
+  color: gold;
+}

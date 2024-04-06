@@ -3,9 +3,9 @@ name: Run Tests
 on:
   workflow_dispatch:
   push:
-
-env:
-  ORGANIZATION_UUID: ${{ secrets.ORGANIZATION_UUID }}
+    branches:
+      - main
+  pull_request:
 
 jobs:
   run-tests:
@@ -44,3 +44,16 @@ jobs:
       artifactName: test-results
       testFile: cobertura-coverage.xml
     secrets: inherit
+
+  compare-branches:
+    name: Compare Branches
+    uses: ./.github/workflows/call-compare-branch.yaml
+    if: github.event_name == 'pull_request'
+    needs: [run-tests, upload-results, upload-coverage]
+    with:
+      pr_number: ${{ github.event.number }}
+    secrets: inherit
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write

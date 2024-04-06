@@ -10,10 +10,21 @@ CREATE TABLE IF NOT EXISTS Users (
   id INT AUTO_INCREMENT PRIMARY KEY,
   email VARCHAR(255) NOT NULL UNIQUE,
   pass VARCHAR(255) NOT NULL,
+  defaultOrgId INT NOT NULL,
+  createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (defaultOrgId) REFERENCES Organizations(id)
+);
+
+CREATE TABLE IF NOT EXISTS Memberships (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  userId INT NOT NULL,
   organizationId INT NOT NULL,
   createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
   updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (organizationId) REFERENCES Organizations(id)
+  FOREIGN KEY (userId) REFERENCES Users(id),
+  FOREIGN KEY (organizationId) REFERENCES Organizations(id),
+  CONSTRAINT uniqueMembership UNIQUE (userId, organizationId)
 );
 
 CREATE TABLE IF NOT EXISTS Repos (
@@ -41,10 +52,10 @@ CREATE TABLE IF NOT EXISTS TestReports (
   id INT AUTO_INCREMENT PRIMARY KEY,
   resultTime DATETIME NULL,
   duration DOUBLE NULL,
-  totalTests INT NULL,
-  totalFailures INT NULL,
-  totalErrors INT NULL,
-  totalSkipped INT NULL,
+  totalTests INT NOT NULL DEFAULT 0,
+  totalFailures INT NOT NULL DEFAULT 0,
+  totalErrors INT NOT NULL DEFAULT 0,
+  totalSkipped INT NOT NULL DEFAULT 0,
   branchId INT NULL,
   createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
   updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -55,10 +66,10 @@ CREATE TABLE IF NOT EXISTS TestSuites (
   id INT AUTO_INCREMENT PRIMARY KEY,
   suiteName VARCHAR(255) NOT NULL,
   duration DOUBLE NULL,
-  totalTests INT NULL,
-  totalFailures INT NULL,
-  totalErrors INT NULL,
-  totalSkipped INT NULL,
+  totalTests INT NOT NULL DEFAULT 0,
+  totalFailures INT NOT NULL DEFAULT 0,
+  totalErrors INT NOT NULL DEFAULT 0,
+  totalSkipped INT NOT NULL DEFAULT 0,
   testReportId INT NULL,
   createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
   updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,

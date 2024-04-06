@@ -14,7 +14,7 @@ async function getCoverageReports(req, res) {
     attributes: ['id', 'resultTime', 'branchRate', 'lineRate', 'totalLines', 'validLines', 'complexity', 'createdAt'],
     where: { 
       branchId: req.params.branchId,
-      '$Branch.Repo.organizationId$': req.user.organizationId
+      '$Branch.Repo.organizationId$': req.user.defaultOrgId,
     },
     include: [
       {
@@ -35,38 +35,54 @@ async function getCoverageReports(req, res) {
     return res.status(404).json({ message: 'Coverage Reports not found' });
   }
 
+  let reports = [];
   for (const report of coverageReports) {
     if (report.resultTime) {
-      report.resultTime = new Date(report.resultTime).toISOString();
+      report.date = new Date(report.resultTime).toISOString();
     }
-    report.createdAt = new Date(report.createdAt).toISOString();
+    report.date = new Date(report.createdAt).toISOString();
+
+    const data = {
+      id: report.id,
+      date: report.date,
+      branchRate: report.branchRate,
+      lineRate: report.lineRate,
+    }
+    reports.push(data);
   }
 
-  return res.json({ coverageReports });
+  reports.sort((a, b) => new Date(b.date) - new Date(a.date));
+  return res.json(reports);
 }
 
 async function getCoverageDetails(req, res) {
-  const CoverageDetails = await CoverageReport.findAll({
+  const CoverageDetails = await CoverageReport.findOne({
     attributes: ['id', 'resultTime', 'branchRate', 'lineRate', 'totalLines', 'validLines', 'complexity'],
-    where: { branchId: req.params.branchId },
-    include: {
-      model: Branch,
-      attributes: [],
-      where: { repoId: req.params.repoId },
-      include: {
-        model: Repo,
+    where: { 
+      id: req.params.reportId,
+      '$Branch.Repo.organizationId$': req.user.defaultOrgId,
+    },
+    include: [
+      {
+        model: Branch,
         attributes: [],
-        where: { organizationId: req.user.organizationId }
-      }
-    },
-    include: {
-      model: CoverageFile,
-      attributes: ['id', 'fileName', 'lineRate', 'branchRate']
-    },
-    order: [[CoverageFile, 'id', 'ASC']]
+        include: [
+          {
+            model: Repo,
+            attributes: []
+          }
+        ]
+      },
+      {
+        model: CoverageFile,
+        attributes: ['fileName', 'lineRate', 'branchRate'],
+        where: { coverageReportId: req.params.reportId },
+      },
+    ]
   });
+  CoverageDetails.CoverageFiles = CoverageDetails.CoverageFiles.sort((a, b) => a.lineRate - b.lineRate);
 
-  if (!CoverageDetails.length) {
+  if (!CoverageDetails) {
     return res.status(404).json({ message: 'Coverage Details not found' });
   }
 
@@ -85,7 +101,7 @@ async function getOrganizationCoverageSummary(req) {
     ],
     where: {
       createdAt: { [Op.gte]: lastThirtyDays },
-      '$Branch.Repo.organizationId$': req.user.organizationId
+      '$Branch.Repo.organizationId$': req.user.defaultOrgId,
     },
     include: [
       {
@@ -95,7 +111,6 @@ async function getOrganizationCoverageSummary(req) {
           {
             model: Repo,
             attributes: [],
-            where: { organizationId: req.user.organizationId }
           }
         ]
       }
@@ -129,7 +144,7 @@ async function getRepoCoverageSummary(req) {
     where: {
       createdAt: { [Op.gte]: lastThirtyDays },
       '$Branch.repoId$': repoId,
-      '$Branch.Repo.organizationId$': req.user.organizationId
+      '$Branch.Repo.organizationId$': req.user.defaultOrgId,
     },
     include: [
       {
@@ -139,7 +154,6 @@ async function getRepoCoverageSummary(req) {
           {
             model: Repo,
             attributes: [],
-            where: { organizationId: req.user.organizationId }
           }
         ]
       }
@@ -173,7 +187,7 @@ async function getBranchCoverageSummary(req) {
     where: {
       createdAt: { [Op.gte]: lastThirtyDays },
       branchId,
-      '$Branch.Repo.organizationId$': req.user.organizationId
+      '$Branch.Repo.organizationId$': req.user.defaultOrgId,
     },
     include: [
       {
@@ -183,7 +197,6 @@ async function getBranchCoverageSummary(req) {
           {
             model: Repo,
             attributes: [],
-            where: { organizationId: req.user.organizationId }
           }
         ]
       }
@@ -201,6 +214,40 @@ async function getBranchCoverageSummary(req) {
   }
 
   return jsonReport;
+}
+
+async function compareBranchCoverage(branchId, primaryBranchId) {
+  const primaryBranchData = await CoverageReport.findOne({
+    where: {
+      branchId: primaryBranchId,
+    },
+    order: [['createdAt', 'DESC']]
+  });
+
+
+  const branchData = await CoverageReport.findOne({
+    where: {
+      branchId,
+    },
+    order: [['createdAt', 'DESC']]
+  });
+
+  const primaryBranch = primaryBranchData ? {
+    branchRate: `${(primaryBranchData.branchRate * 100).toFixed(2)}%`,
+    lineRate: `${(primaryBranchData.lineRate * 100).toFixed(2)}%`
+  } : null;
+
+  const branch = branchData ? {
+    branchRate: `${(branchData.branchRate * 100).toFixed(2)}%`,
+    lineRate: `${(branchData.lineRate * 100).toFixed(2)}%`
+  } : null;
+
+  const difference = primaryBranch && branch ? {
+    branchRate: `${((branchData.branchRate - primaryBranchData.branchRate) * 100).toFixed(2)}%`,
+    lineRate: `${((branchData.lineRate - primaryBranchData.lineRate) * 100).toFixed(2)}%`
+  } : null;
+  
+  return { primaryBranch, branch, difference };
 }
 
 async function uploadCoverageReport(req, res, organizationId) {
@@ -228,9 +275,14 @@ async function uploadCoverageReport(req, res, organizationId) {
     defaults: { repoName: req.params.repoName, organizationId }
   });
 
+  const existingBranch = await Branch.findOne({
+    where: { repoId: repo[0].id, isPrimary: true }
+  });
+  const isPrimary = !existingBranch;
+
   const branch = await Branch.findOrCreate({
     where: { branchName: req.params.branchName, repoId: repo[0].id },
-    defaults: { branchName: req.params.branchName, isPrimary: false, repoId: repo[0].id }
+    defaults: { branchName: req.params.branchName, isPrimary, repoId: repo[0].id }
   });
 
   let resultTime = parsedData.coverage['@_timestamp'];
@@ -267,6 +319,7 @@ async function uploadCoverageReport(req, res, organizationId) {
 }
 
 module.exports = {
+  compareBranchCoverage,
   getCoverageReports,
   getCoverageDetails,
   getBranchCoverageSummary,
