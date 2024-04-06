@@ -3,7 +3,7 @@ const cors = require('cors');
 const session = require('express-session');
 const multer = require('multer');
 const passport = require('./server/middleware.js');
-const { createUser, getOrganizations, getOrganizationByUuid } = require('./server/registration.js');
+const { createOrganization, createUser, getOrganizations, getOrganizationByUuid, updateDefaultOrganization } = require('./server/registration.js');
 const { getRepos, getBranches, updatePrimaryBranch } = require('./server/repos.js');
 const { getTestReports, getTestDetails, insertTests } = require('./server/tests.js');
 const { getCoverageReports, getCoverageDetails, uploadCoverageReport } = require('./server/coverage.js');
@@ -38,11 +38,10 @@ app.post('/session', passport.authenticate('local'), (req, res) => {
 });
 
 app.get('/session', (req, res) => {
-  console.log(req.user);
   if (req.user) {
-    res.json({ 
+    res.json({
       email: req.user.email,
-      organizationId: req.user.organizationId
+      defaultOrgId: req.user.defaultOrgId,
     });
   } else {
     res.status(401).json({ message: 'Unauthorized' });
@@ -61,6 +60,17 @@ app.post('/register', (req, res) => {
 /**
  * Organizations, Repos and Branches
  */
+app.post('/organizations', (req, res) => {
+  createOrganization(req, res);
+});
+
+app.post('/organizations/:orgId', (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ message: 'Unauthorized' });
+  }
+  updateDefaultOrganization(req, res);
+})
+
 app.get('/organizations', (req, res) => {
   if (!req.user) {
     return res.status(401).json({ message: 'Unauthorized' });

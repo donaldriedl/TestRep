@@ -7,7 +7,7 @@ async function getRepos(req, res) {
   const repos = await Repo.findAll({
     attributes: ['id', 'repoName'],
     where: {
-      organizationId: req.user.organizationId
+      organizationId: req.user.defaultOrgId,
     },
     include: {
       model: Branch,
@@ -171,7 +171,14 @@ async function updatePrimaryBranch(req, res) {
     }
   });
 
-  if (!branch) {
+  const repo = await Repo.findOne({
+    where: {
+      id: branch.repoId,
+      organizationId: req.user.defaultOrgId,
+    }
+  });
+
+  if (!branch || !repo) {
     return res.status(404).json({ message: 'Branch not found' });
   }
 

@@ -8,14 +8,32 @@
           <v-text-field v-model="emailField" label="Email" type="email" variant="underlined" />
           <v-text-field v-model="passwordField" label="Password" type="password" variant="underlined" />
           <v-text-field v-model="confirmPasswordField" label="Confirm Password" type="password" variant="underlined" />
-          <v-text-field v-model="organizationField" label="Organization" type="text" variant="underlined" />
+          <v-text-field
+            v-model="organizationField"
+            label="Organization UUID"
+            type="text"
+            variant="underlined"
+            append-icon="mdi-plus"
+            @click:append="dialog = !dialog" />
           <v-card-actions>
-            <v-btn color="primary" @click="register"> register </v-btn>
+            <v-btn color="primary" @click="register"> Register </v-btn>
             <v-btn color="primary" @click="cancel"> Cancel </v-btn>
           </v-card-actions>
         </v-card-text>
       </v-card>
     </v-responsive>
+    <v-dialog v-model="dialog" max-width="290">
+      <v-card>
+        <v-card-title class="headline"> Create Organization </v-card-title>
+        <v-card-text>
+          <v-text-field v-model="createOrgName" label="Organization Name" type="text" variant="underlined" />
+        </v-card-text>
+        <v-card-actions>
+          <v-btn color="primary" @click="createOrganization"> Create </v-btn>
+          <v-btn color="primary" @click="dialog = false"> Cancel </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
     <v-snackbar v-model="snackbar" color="error">{{ snackbarMessage }}</v-snackbar>
   </v-container>
 </template>
@@ -31,6 +49,9 @@ const confirmPasswordField = ref('');
 const organizationField = ref('');
 const snackbar = ref(false);
 const snackbarMessage = ref('');
+
+const dialog = ref(false);
+const createOrgName = ref('');
 
 const register = () => {
   if (!emailField.value || !passwordField.value || !confirmPasswordField.value || !organizationField.value) {
@@ -51,7 +72,7 @@ const register = () => {
     body: JSON.stringify({
       email: emailField.value,
       password: passwordField.value,
-      orgName: organizationField.value
+      orgUuid: organizationField.value
     }),
     headers: {
       'Content-Type': 'application/json'
@@ -69,6 +90,33 @@ const register = () => {
       passwordField.value = '';
     }
   });
+};
+
+const createOrganization = async () => {
+  if (!createOrgName) {
+    snackbar.value = true;
+    snackbarMessage.value = 'Organization name is required';
+    return;
+  }
+
+  const response = await fetch('http://localhost:3001/organizations', {
+    method: 'POST',
+    body: JSON.stringify({
+      orgName: createOrgName.value,
+    }),
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  });
+    
+  if (response.status === 201) {
+    const parsedResponse = await response.json();
+    organizationField.value = parsedResponse.uuid;
+    dialog.value = false;
+  } else {
+    snackbar.value = true;
+    snackbarMessage.value = 'Unknown error occurred';
+  }
 };
 
 const cancel = () => {

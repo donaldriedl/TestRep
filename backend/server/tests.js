@@ -15,7 +15,7 @@ async function getTestReports(req, res) {
     attributes: ['id', 'resultTime', 'duration', 'totalTests', 'totalFailures', 'totalErrors', 'totalSkipped', 'createdAt'],
     where: { 
       branchId: req.params.branchId,
-      '$Branch.Repo.organizationId$': req.user.organizationId
+      '$Branch.Repo.organizationId$': req.user.defaultOrgId,
     },
     include: [
       {
@@ -64,7 +64,7 @@ async function getTestDetails(req, res) {
     attributes: ['id', 'resultTime', 'duration', 'totalTests', 'totalFailures', 'totalErrors', 'totalSkipped', 'createdAt'],
     where: { 
       id: req.params.reportId,
-      '$Branch.Repo.organizationId$': req.user.organizationId,
+      '$Branch.Repo.organizationId$': req.user.defaultOrgId,
     },
     include: [
       {
@@ -125,7 +125,7 @@ async function getOrganizationTestSummary(req) {
     ],
     where: {
       createdAt: { [Op.gte]: lastThirtyDays },
-      '$Branch.Repo.organizationId$': req.user.organizationId
+      '$Branch.Repo.organizationId$': req.user.defaultOrgId,
     },
     include: [
       {
@@ -135,7 +135,6 @@ async function getOrganizationTestSummary(req) {
           {
             model: Repo,
             attributes: [],
-            where: { organizationId: req.user.organizationId }
           }
         ]
       }
@@ -173,7 +172,7 @@ async function getRepoTestSummary(req) {
     where: {
       createdAt: { [Op.gte]: lastThirtyDays },
       '$Branch.repoId$': repoId,
-      '$Branch.Repo.organizationId$': req.user.organizationId
+      '$Branch.Repo.organizationId$': req.user.defaultOrgId,
     },
     include: [
       {
@@ -184,7 +183,6 @@ async function getRepoTestSummary(req) {
           {
             model: Repo,
             attributes: [],
-            where: { organizationId: req.user.organizationId }
           }
         ]
       },
@@ -221,7 +219,7 @@ async function getBranchTestSummary(req) {
     where: {
       createdAt: { [Op.gte]: lastThirtyDays },
       branchId,
-      '$Branch.Repo.organizationId$': req.user.organizationId
+      '$Branch.Repo.organizationId$': req.user.defaultOrgId,
     },
     include: [
       {
@@ -232,7 +230,6 @@ async function getBranchTestSummary(req) {
           {
             model: Repo,
             attributes: [],
-            where: { organizationId: req.user.organizationId }
           }
         ]
       },
@@ -313,9 +310,14 @@ async function insertTests(req, res, organizationId) {
     defaults: { repoName: req.params.repoName, organizationId }
   });
 
+  const existingBranch = await Branch.findOne({
+    where: { repoId: repo[0].id, isPrimary: true }
+  });
+  const isPrimary = !existingBranch;
+
   const branch = await Branch.findOrCreate({
     where: { branchName: req.params.branchName, repoId: repo[0].id },
-    defaults: { branchName: req.params.branchName, isPrimary: false, repoId: repo[0].id }
+    defaults: { branchName: req.params.branchName, isPrimary, repoId: repo[0].id }
   });
 
   const testReport = await TestReport.create({

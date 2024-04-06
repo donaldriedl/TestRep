@@ -14,7 +14,7 @@ async function getCoverageReports(req, res) {
     attributes: ['id', 'resultTime', 'branchRate', 'lineRate', 'totalLines', 'validLines', 'complexity', 'createdAt'],
     where: { 
       branchId: req.params.branchId,
-      '$Branch.Repo.organizationId$': req.user.organizationId
+      '$Branch.Repo.organizationId$': req.user.defaultOrgId,
     },
     include: [
       {
@@ -60,7 +60,7 @@ async function getCoverageDetails(req, res) {
     attributes: ['id', 'resultTime', 'branchRate', 'lineRate', 'totalLines', 'validLines', 'complexity'],
     where: { 
       id: req.params.reportId,
-      '$Branch.Repo.organizationId$': req.user.organizationId,
+      '$Branch.Repo.organizationId$': req.user.defaultOrgId,
     },
     include: [
       {
@@ -101,7 +101,7 @@ async function getOrganizationCoverageSummary(req) {
     ],
     where: {
       createdAt: { [Op.gte]: lastThirtyDays },
-      '$Branch.Repo.organizationId$': req.user.organizationId
+      '$Branch.Repo.organizationId$': req.user.defaultOrgId,
     },
     include: [
       {
@@ -111,7 +111,6 @@ async function getOrganizationCoverageSummary(req) {
           {
             model: Repo,
             attributes: [],
-            where: { organizationId: req.user.organizationId }
           }
         ]
       }
@@ -145,7 +144,7 @@ async function getRepoCoverageSummary(req) {
     where: {
       createdAt: { [Op.gte]: lastThirtyDays },
       '$Branch.repoId$': repoId,
-      '$Branch.Repo.organizationId$': req.user.organizationId
+      '$Branch.Repo.organizationId$': req.user.defaultOrgId,
     },
     include: [
       {
@@ -155,7 +154,6 @@ async function getRepoCoverageSummary(req) {
           {
             model: Repo,
             attributes: [],
-            where: { organizationId: req.user.organizationId }
           }
         ]
       }
@@ -189,7 +187,7 @@ async function getBranchCoverageSummary(req) {
     where: {
       createdAt: { [Op.gte]: lastThirtyDays },
       branchId,
-      '$Branch.Repo.organizationId$': req.user.organizationId
+      '$Branch.Repo.organizationId$': req.user.defaultOrgId,
     },
     include: [
       {
@@ -199,7 +197,6 @@ async function getBranchCoverageSummary(req) {
           {
             model: Repo,
             attributes: [],
-            where: { organizationId: req.user.organizationId }
           }
         ]
       }
@@ -278,9 +275,14 @@ async function uploadCoverageReport(req, res, organizationId) {
     defaults: { repoName: req.params.repoName, organizationId }
   });
 
+  const existingBranch = await Branch.findOne({
+    where: { repoId: repo[0].id, isPrimary: true }
+  });
+  const isPrimary = !existingBranch;
+
   const branch = await Branch.findOrCreate({
     where: { branchName: req.params.branchName, repoId: repo[0].id },
-    defaults: { branchName: req.params.branchName, isPrimary: false, repoId: repo[0].id }
+    defaults: { branchName: req.params.branchName, isPrimary, repoId: repo[0].id }
   });
 
   let resultTime = parsedData.coverage['@_timestamp'];
