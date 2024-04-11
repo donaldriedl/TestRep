@@ -39,8 +39,9 @@ async function getCoverageReports(req, res) {
   for (const report of coverageReports) {
     if (report.resultTime) {
       report.date = new Date(report.resultTime).toISOString();
+    } else {
+      report.date = new Date(report.createdAt).toISOString();
     }
-    report.date = new Date(report.createdAt).toISOString();
 
     const data = {
       id: report.id,
@@ -56,7 +57,7 @@ async function getCoverageReports(req, res) {
 }
 
 async function getCoverageDetails(req, res) {
-  const CoverageDetails = await CoverageReport.findOne({
+  const coverageDetails = await CoverageReport.findOne({
     attributes: ['id', 'resultTime', 'branchRate', 'lineRate', 'totalLines', 'validLines', 'complexity'],
     where: { 
       id: req.params.reportId,
@@ -80,13 +81,16 @@ async function getCoverageDetails(req, res) {
       },
     ]
   });
-  CoverageDetails.CoverageFiles = CoverageDetails.CoverageFiles.sort((a, b) => a.lineRate - b.lineRate);
-
-  if (!CoverageDetails) {
+  
+  if (!coverageDetails) {
     return res.status(404).json({ message: 'Coverage Details not found' });
   }
 
-  return res.json({ CoverageDetails });
+  if (coverageDetails.CoverageFiles) {
+    coverageDetails.CoverageFiles = coverageDetails.CoverageFiles.sort((a, b) => a.lineRate - b.lineRate);
+  }
+
+  return res.json({ coverageDetails });
 }
 
 async function getOrganizationCoverageSummary(req) {
@@ -315,7 +319,7 @@ async function uploadCoverageReport(req, res, organizationId) {
     }
   }
 
-  return res.sendStatus(201);
+  return res.status(201).json({ message: 'Coverage report uploaded' });
 }
 
 module.exports = {

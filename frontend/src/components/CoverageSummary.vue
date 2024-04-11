@@ -1,10 +1,5 @@
 <template>
     <v-row>
-      <v-col>
-        <h1 class="display-1"> Coverage Dashboard </h1>
-      </v-col>
-    </v-row>
-    <v-row>
       <v-col cols="12">
         <v-card elevation="4" class="m-4">
           <v-card-title class="bg-secondary"> {{ props.coverageData.date }} </v-card-title>
@@ -53,33 +48,28 @@
               </v-row>
             </v-col>
           </v-row>
+          <v-row>
+            <v-col cols="12">
+              <v-data-table
+                :headers="listHeader"
+                :items="props.coverageData.coverageFiles"
+                item-key="fileName"
+                class="elevation-1">
+                <template v-slot:item = "{ item }">
+                  <tr class="data-table-row">
+                    <td class="text-left">{{  item.fileName }}</td>
+                    <td>
+                      <v-chip dark>{{ `${(item.lineRate * 100).toFixed(2)}%` }}</v-chip>
+                    </td>
+                    <td>
+                      <v-chip dark>{{ `${(item.branchRate * 100).toFixed(2)}%` }}</v-chip>
+                    </td>
+                  </tr>
+                </template>
+              </v-data-table>
+            </v-col>
+          </v-row>
         </v-card>
-      </v-col>
-    </v-row>
-    <v-row>
-      <v-col cols="12">
-        <v-data-table
-          :headers="listHeader"
-          :items="props.coverageData.coverageFiles"
-          item-key="fileName"
-          class="elevation-1">
-          <template v-slot:top>
-            <v-toolbar flat>
-              <v-toolbar-title>Coverage Files</v-toolbar-title>
-            </v-toolbar>
-          </template>
-          <template v-slot:item = "{ item }">
-            <tr class="data-table-row">
-              <td class="text-left">{{  item.fileName }}</td>
-              <td>
-                <v-chip dark>{{ `${item.lineRate * 100}%` }}</v-chip>
-              </td>
-              <td>
-                <v-chip dark>{{ `${item.branchRate * 100}%` }}</v-chip>
-              </td>
-            </tr>
-          </template>
-        </v-data-table>
       </v-col>
     </v-row>
 </template>

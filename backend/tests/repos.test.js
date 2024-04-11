@@ -3,130 +3,151 @@ const Repo = require('../models/repo');
 const Branch = require('../models/branch');
 
 describe('getRepos', () => {
-  it('should return repos when they exist', async () => {
-    const req = {
-      user: {
-        organizationId: 1
-      }
-    };
-    const res = {
-      json: jest.fn()
+  beforeEach(() => {
+    req = {
+      user: { defaultOrgId: 1 },
     };
 
-    const expectedRepos = [
-      { id: 1, repoName: 'Repo 1' },
-      { id: 2, repoName: 'Repo 2' }
+    res = {
+      json: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+    };
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('should return repos when they exist', async () => {
+    const mockRepoData = [
+      {
+        id: 1,
+        repoName: 'Repo 1',
+        organizationId: 1,
+        Branches: [
+          {
+            id: 1,
+            branchName: 'Branch 1',
+            TestReports: [
+              {
+                totalTests: 10,
+                totalFailures: 2,
+                totalErrors: 1,
+                totalSkipped: 3
+              }
+            ],
+            CoverageReports: [
+              {
+                lineRate: 0.8,
+                branchRate: 0.7
+              }
+            ]
+          }
+        ]
+      },
     ];
 
-    Repo.findAll = jest.fn().mockResolvedValue(expectedRepos);
+    repoFindAllMock = jest.spyOn(Repo, 'findAll').mockResolvedValue(mockRepoData);
 
     await getRepos(req, res);
 
-    expect(Repo.findAll).toHaveBeenCalledWith({
-      attributes: ['id', 'repoName'],
-      where: {
-        organizationId: req.user.organizationId
+    const expectedResult = [
+      {
+        id: 1,
+        name: 'Repo 1',
+        totalPassed: 4,
+        totalFailures: 2,
+        totalErrors: 1,
+        totalSkipped: 3,
+        lineRate: '80.00%',
+        branchRate: '70.00%'
       }
-    });
-    expect(res.json).toHaveBeenCalledWith({ repos: expectedRepos });
+    ];
+
+    expect(repoFindAllMock).toHaveBeenCalledTimes(1);
+    expect(res.json).toHaveBeenCalledWith(expectedResult);
   });
 
   it('should return 404 when no repos exist', async () => {
-    const req = {
-      user: {
-        organizationId: 1
-      }
-    };
-    const res = {
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn()
-    };
-
-    Repo.findAll = jest.fn().mockResolvedValue([]);
+    repoFindAllMock = jest.spyOn(Repo, 'findAll').mockResolvedValue([]);
 
     await getRepos(req, res);
 
-    expect(Repo.findAll).toHaveBeenCalledWith({
-      attributes: ['id', 'repoName'],
-      where: {
-        organizationId: req.user.organizationId
-      }
-    });
+    expect(repoFindAllMock).toHaveBeenCalledTimes(1);
     expect(res.status).toHaveBeenCalledWith(404);
     expect(res.json).toHaveBeenCalledWith({ message: 'Repos not found' });
   });
 });
 
 describe('getBranches', () => {
-  it('should return branches when they exist', async () => {
-    const req = {
-      params: {
-        repoId: 1
-      },
-      user: {
-        organizationId: 1
-      }
-    };
-    const res = {
-      json: jest.fn()
+  beforeEach(() => {
+    req = {
+      params: { repoId: 1 },
+      user: { defaultOrgId: 1 },
     };
 
+    res = {
+      json: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+    };
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('should return branches when they exist', async () => {
     const expectedBranches = [
-      { id: 1, branchName: 'Branch 1', repoId: 1, isPrimary: true },
-      { id: 2, branchName: 'Branch 2', repoId: 1, isPrimary: false }
+      {
+        id: 1,
+        branchName: 'Branch 1',
+        repoId: 1,
+        isPrimary: true,
+        TestReports: [
+          {
+            totalTests: 10,
+            totalFailures: 2,
+            totalErrors: 1,
+            totalSkipped: 3
+          }
+        ],
+        CoverageReports: [
+          {
+            lineRate: 0.8,
+            branchRate: 0.7
+          }
+        ]
+      }
     ];
 
-    Branch.findAll = jest.fn().mockResolvedValue(expectedBranches);
+    branchFindAllMock = jest.spyOn(Branch, 'findAll').mockResolvedValue(expectedBranches);
 
     await getBranches(req, res);
 
-    expect(Branch.findAll).toHaveBeenCalledWith({
-      attributes: ['id', 'branchName', 'repoId', 'isPrimary'],
-      where: {
-        repoId: req.params.repoId
-      },
-      include: {
-        attributes: ['repoName', 'organizationId'],
-        model: Repo,
-        where: {
-          organizationId: req.user.organizationId
-        }
-      },
-    });
-    expect(res.json).toHaveBeenCalledWith({ branches: expectedBranches });
+    const expectedResult = [
+      {
+        id: 1,
+        name: 'Branch 1',
+        isPrimary: true,
+        totalPassed: 4,
+        totalFailures: 2,
+        totalErrors: 1,
+        totalSkipped: 3,
+        lineRate: '80.00%',
+        branchRate: '70.00%'
+      }
+    ];
+
+    expect(branchFindAllMock).toHaveBeenCalledTimes(1);
+    expect(res.json).toHaveBeenCalledWith(expectedResult);
   });
 
   it('should return 404 when no branches exist', async () => {
-    const req = {
-      params: {
-        repoId: 1
-      },
-      user: {
-        organizationId: 1
-      }
-    };
-    const res = {
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn()
-    };
-
-    Branch.findAll = jest.fn().mockResolvedValue([]);
+    branchFindAllMock = jest.spyOn(Branch, 'findAll').mockResolvedValue([]);
 
     await getBranches(req, res);
 
-    expect(Branch.findAll).toHaveBeenCalledWith({
-      attributes: ['id', 'branchName', 'repoId', 'isPrimary'],
-      where: {
-        repoId: req.params.repoId
-      },
-      include: {
-        attributes: ['repoName', 'organizationId'],
-        model: Repo,
-        where: {
-          organizationId: req.user.organizationId
-        }
-      },
-    });
+    expect(branchFindAllMock).toHaveBeenCalledTimes(1);
     expect(res.status).toHaveBeenCalledWith(404);
     expect(res.json).toHaveBeenCalledWith({ message: 'Branches not found' });
   });

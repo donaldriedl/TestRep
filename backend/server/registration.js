@@ -16,7 +16,7 @@ async function createOrganization(req, res) {
     if (err.name === 'SequelizeUniqueConstraintError') {
       return res.status(400).json({ message: 'Organization name already exists' });
     }
-    console.log(err);
+    console.error(err);
     return res.status(500).json({ message: 'Internal server error' });
   }
 }
@@ -38,7 +38,7 @@ async function createUser(req, res) {
       const membership = new Membership({ userId: user.id, organizationId: organization.id });
       await membership.save();
 
-      res.sendStatus(201, 'User created');
+      res.status(201).json({ "message": "User created successfully" })
     } catch (err) {
       if (err.name === 'SequelizeUniqueConstraintError') {
         return res.status(400).json({ message: 'Email already exists' });
