@@ -17,7 +17,7 @@
             @click:append="dialog = !dialog" />
           <v-card-actions>
             <v-btn color="primary" @click="register"> Register </v-btn>
-            <v-btn color="primary" @click="cancel"> Cancel </v-btn>
+            <v-btn color="primary" @click="router.push('/login')"> Cancel </v-btn>
           </v-card-actions>
         </v-card-text>
       </v-card>
@@ -34,92 +34,79 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-    <v-snackbar v-model="snackbar" color="error">{{ snackbarMessage }}</v-snackbar>
   </v-container>
 </template>
 
 <script setup>
+import Helpers from '@/helpers.js';
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { useStore } from 'vuex';
 
 const router = useRouter();
+const store = useStore();
+
+// Registration Fields
 const emailField = ref('');
 const passwordField = ref('');
 const confirmPasswordField = ref('');
 const organizationField = ref('');
-const snackbar = ref(false);
-const snackbarMessage = ref('');
 
+// Create Organization Dialog
 const dialog = ref(false);
 const createOrgName = ref('');
 
-const register = () => {
+const register = async () => {
   if (!emailField.value || !passwordField.value || !confirmPasswordField.value || !organizationField.value) {
-    snackbar.value = true;
-    snackbarMessage.value = 'Email, password, and organization are required';
+    store.commit('showError', 'All fields are required');
     return;
   }
 
   if (passwordField.value !== confirmPasswordField.value) {
-    snackbar.value = true;
-    snackbarMessage.value = 'Passwords do not match';
+    store.commit('showError', 'Passwords do not match');
     return;
   }
 
 
-  fetch('http://localhost:3001/register', {
+  const response = await fetch('http://localhost:3001/register', {
     method: 'POST',
     body: JSON.stringify({
       email: emailField.value,
       password: passwordField.value,
       orgUuid: organizationField.value
     }),
-    headers: {
-      'Content-Type': 'application/json'
-    }
-  }).then(response => {
-    if (response.status === 201) {
-      router.push('/login');
-    } else if (response.status === 400) {
-      snackbar.value = true;
-      snackbarMessage.value = 'Email or Organization already exists';
-      passwordField.value = '';
-    } else {
-      snackbar.value = true;
-      snackbarMessage.value = 'Unknown error occurred';
-      passwordField.value = '';
-    }
+    headers: { 'Content-Type': 'application/json' }
   });
+
+  if (Helpers.validateResponse(response)) {
+    router.push('/login');
+  } else if (response.status === 400) {
+    store.commit('showError', 'Email or Organization already exists');
+  } else if (response.status === 404) {
+    store.commit('showError', 'Organization not found');
+  } else {
+    store.commit('showError', 'Unknown error occurred');
+  }
 };
 
 const createOrganization = async () => {
   if (!createOrgName) {
-    snackbar.value = true;
-    snackbarMessage.value = 'Organization name is required';
+    store.commit('showError', 'Organization name is required');
     return;
   }
 
   const response = await fetch('http://localhost:3001/organizations', {
     method: 'POST',
-    body: JSON.stringify({
-      orgName: createOrgName.value,
-    }),
-    headers: {
-      'Content-Type': 'application/json'
-    }
+    body: JSON.stringify({ orgName: createOrgName.value }),
+    headers: { 'Content-Type': 'application/json' }
   });
-    
-  if (response.status === 201) {
+
+  if (Helpers.validateResponse(response)) {
     const parsedResponse = await response.json();
     organizationField.value = parsedResponse.uuid;
     dialog.value = false;
   } else {
-    snackbar.value = true;
-    snackbarMessage.value = 'Unknown error occurred';
+    store.commit('showError', 'Unknown error occurred');
   }
-};
-
-const cancel = () => {
-  router.push('/');
 };
 </script>

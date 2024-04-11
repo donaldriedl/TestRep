@@ -2,7 +2,7 @@
   <v-row>
     <v-col cols="7">
       <v-data-table
-        class="my-10 data-table"
+        class="data-table"
         :headers="testHeaders"
         :items="props.testData"
         :items-per-page="10"
@@ -34,7 +34,7 @@
     </v-col>
     <v-col cols="5">
       <v-data-table
-        class="my-10 data-table"
+        class=" data-table"
         id="coverage-table"
         :headers="coverageHeaders"
         :items="props.coverageData"

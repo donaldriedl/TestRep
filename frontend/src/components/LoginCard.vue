@@ -14,7 +14,6 @@
         </v-card-text>
       </v-card>
     </v-responsive>
-    <v-snackbar v-model="snackbar" color="error">{{ snackbarMessage }}</v-snackbar>
   </v-container>
 </template>
 
@@ -28,8 +27,6 @@ const store = useStore();
 const router = useRouter();
 const emailField = ref('');
 const passwordField = ref('');
-const snackbar = ref(false);
-const snackbarMessage = ref('');
 
 const handleKeyPress = (event) => {
   if (event.key === 'Enter' && emailField.value && passwordField.value) {
@@ -47,8 +44,7 @@ onUnmounted(() => {
 
 const login = () => {
   if (!emailField.value || !passwordField.value) {
-    snackbar.value = true;
-    snackbarMessage.value = 'Email and password are required';
+    store.commit('showError', 'Please enter an email and password');
     return;
   }
 
@@ -60,8 +56,8 @@ const login = () => {
   ).then(() => {
     router.push('/dashboard');
   }).catch(() => {
-    snackbar.value = true;
-    snackbarMessage.value = 'Invalid email or password';
+    store.commit('showError', 'Invalid email or password');
+    return;
   })
 };
 

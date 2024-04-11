@@ -1,5 +1,5 @@
 <template>
-  <v-app>
+  <v-app id="testRepApp">
     <default-bar 
       v-if="store.getters.isLoggedIn"
     />
@@ -11,9 +11,10 @@
 <script setup>
   import DefaultBar from './AppBar.vue'
   import DefaultView from './View.vue'
+  import Helpers from '@/helpers.js'
   import { useStore } from 'vuex'
   import { useRouter } from 'vue-router'
-  import { onMounted, ref } from 'vue'
+  import { onMounted } from 'vue'
 
   const router = useRouter()
   const store = useStore()
@@ -47,3 +48,9 @@
     }
   }
 </script>
+
+<style scoped>
+  #testRepApp {
+    background-image: linear-gradient(to right, #f5f5f5, #ffffff, #f5f5f5);
+  }
+</style>

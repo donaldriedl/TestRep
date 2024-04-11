@@ -67,6 +67,25 @@ async function updateDefaultOrganization(req, res) {
   }
 }
 
+async function joinOrganization(req, res) {
+  const orgUuid = req.body.organizationUuid;
+
+  try {
+    const organization = await getOrganizationByUuid(orgUuid);
+    if (!organization) {
+      return res.status(404).json({ message: 'Organization not found' });
+    }
+
+    const membership = new Membership({ userId: req.user.id, organizationId: organization.id });
+    await membership.save();
+
+    res.sendStatus(200);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+}
+
 async function getOrganizations(req, res) {
   const orgIds = await Membership.findAll({ where: { userId: req.user.id }});
   if (!orgIds.length) {
@@ -89,4 +108,11 @@ async function getOrganizationByUuid(uuid) {
   return organization;
 }
 
-module.exports = { createOrganization, createUser, getOrganizations, getOrganizationByUuid, updateDefaultOrganization };
+module.exports = {
+  createOrganization,
+  createUser,
+  getOrganizations,
+  getOrganizationByUuid,
+  joinOrganization,
+  updateDefaultOrganization
+};

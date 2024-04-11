@@ -1,16 +1,11 @@
 <template>
   <v-data-table
-    class="my-10 data-table"
+    class="data-table"
     :headers="headers"
     :items="props.repoData"
     :items-per-page="5"
     :hide-default-footer="true"
   >
-    <template v-slot:top>
-      <v-toolbar flat>
-        <v-toolbar-title>{{ props.dataType }}</v-toolbar-title>
-      </v-toolbar>
-    </template>
     <template v-slot:item = "{ item }">
       <tr @click="navigateToSub(item.id, )" class="cursor-pointer data-table-row">
         <td class="text-left">{{  item.name }}</td>
@@ -33,6 +28,9 @@
           <v-chip dark>{{ item.branchRate }}</v-chip>
         </td>
       </tr>
+    </template>
+    <template v-slot:no-data>
+      <p> No Data Available </p>
     </template>
   </v-data-table>
 </template>

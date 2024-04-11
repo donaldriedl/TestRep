@@ -1,29 +1,26 @@
 <template>
-    <v-row>
-      <v-col>
-        <h1 class="display-1"> {{ props.summaryType }} Dashboard </h1>
+    <v-card-title class="bg-secondary">
+      <v-row>
+        <v-col cols="7">
+          Test Summary
+        </v-col>
+        <v-col cols="5">
+          Coverage Summary
+        </v-col>
+      </v-row>
+    </v-card-title>
+    <v-row class="py-1">
+      <v-col cols="7">
+        <div class="mx-4 my-4" style="height: 300px;">
+          <canvas id="test-summary" v-if="testDataExists"></canvas>
+          <v-alert v-else>No test data available.</v-alert>
+        </div>
       </v-col>
-    </v-row>
-    <v-row>
-      <v-col>
-        <v-card elevation="4">
-          <v-card-title class="bg-secondary"> {{ props.summaryType }} Test Summary </v-card-title>
-          <v-divider></v-divider>
-          <div class="mx-4 my-4" style="height: 300px;">
-            <canvas id="test-summary" v-if="testDataExists"></canvas>
-            <v-alert v-else>No test data available.</v-alert>
-          </div>
-        </v-card>
-      </v-col>
-      <v-col>
-        <v-card>
-          <v-card-title class="bg-secondary"> {{ props.summaryType }} Coverage Summary </v-card-title>
-          <v-divider></v-divider>
-          <div class="mx-4 my-4" style="height: 300px;">
-            <canvas id="coverage-summary" v-if="coverageDataExists"></canvas>
-            <v-alert v-else>No coverage data available.</v-alert>
-          </div>
-        </v-card>
+      <v-col cols="5">
+        <div class="mx-4 my-4" style="height: 300px;">
+          <canvas id="coverage-summary" v-if="coverageDataExists"></canvas>
+          <v-alert v-else>No coverage data available.</v-alert>
+        </div>
       </v-col>
     </v-row>
 </template>

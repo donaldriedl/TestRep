@@ -190,7 +190,7 @@ async function updatePrimaryBranch(req, res) {
 
   await Branch.update({ isPrimary: true }, {
     where: {
-      id: req.params.repoId
+      id: branchId
     }
   });
 

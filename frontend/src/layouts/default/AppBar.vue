@@ -1,7 +1,14 @@
 <template>
-  <v-app-bar color="primary">
-    <v-btn id="menu-btn" icon="mdi-menu" color="background" />
-    <v-app-bar-title> TestRep </v-app-bar-title>
+  <v-app-bar color="primary" class="d-flex">
+    <div style="flex-grow: 1;">
+      <v-img
+        src="@/assets/testrep-logo.png"
+        alt="TestRep Logo"
+        height="50px"
+        width="100px"
+        class="mr-4 cursor-pointer"
+        @click="router.push('/dashboard')" />
+    </div>
     <v-btn id="dark-light-btn" icon="mdi-theme-light-dark" @click="swapTheme" />
     <v-menu>
       <template v-slot:activator="{ props }">

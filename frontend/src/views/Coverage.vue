@@ -10,11 +10,14 @@
   
 <script setup>
     import CoverageSummary from '@/components/CoverageSummary.vue';
+    import Helpers from '@/helpers.js';
     import { onMounted, ref } from 'vue';
     import { useRouter } from 'vue-router';
+    import { useStore } from 'vuex';
     import Helpers from '@/helpers.js';
 
     const router = useRouter();
+    const store = useStore();
 
     const reportId = router.currentRoute.value.params.id;
     const coverageData = ref({});
@@ -33,9 +36,7 @@
       credentials: 'include'
     })
     
-    if (response.status === 401) {
-      router.push('/login');
-    } else {
+    if (Helpers.validateResponse(response)) {
       const data = await response.json();
       coverageData.value = {
         date: Helpers.formatDate(data.CoverageDetails.resultTime),
@@ -45,8 +46,9 @@
         totalLines: data.CoverageDetails.validLines,
         coverageFiles: data.CoverageDetails.CoverageFiles
       }
-      console.log(coverageData);
       reportDataLoaded.value = true;
+    } else {
+      store.commit('showError', 'Error retrieving coverage data');
     }
   }
 </script>
