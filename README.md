@@ -12,7 +12,7 @@ Github Action integrations can upload results automatically and report results d
 ```bash
 git clone git@github.com:donaldriedl/TestRep.git
 cd TestRep
-npm start
+docker compose up -d
 ```
 
 ## License
