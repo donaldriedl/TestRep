@@ -41,8 +41,9 @@ async function getTestReports(req, res) {
   for (const report of testReports) {
     if (report.resultTime) {
       report.resultTime = new Date(report.resultTime).toISOString();
+    } else {
+      report.createdAt = new Date(report.createdAt).toISOString();
     }
-    report.createdAt = new Date(report.createdAt).toISOString();
 
     const data = {
       id: report.id,
@@ -98,15 +99,19 @@ async function getTestDetails(req, res) {
 
   if (testDetails.resultTime) {
     testDetails.resultTime = new Date(testDetails.resultTime).toISOString();
+  } else {
+    testDetails.createdAt = new Date(testDetails.createdAt).toISOString();
   }
-  testDetails.createdAt = new Date(testDetails.createdAt).toISOString();
 
-  let details = testDetails.toJSON();
-
-  details.date = testDetails.resultTime ? testDetails.resultTime : testDetails.createdAt;
-  details.totalPassed = testDetails.totalTests - (testDetails.totalFailures + testDetails.totalErrors + testDetails.totalSkipped);
-  delete details.createdAt;
-  delete details.resultTime;
+  const details = {
+    id: testDetails.id,
+    date: testDetails.resultTime ? testDetails.resultTime : testDetails.createdAt,
+    totalPassed: testDetails.totalTests - (testDetails.totalFailures + testDetails.totalErrors + testDetails.totalSkipped),
+    totalFailures: testDetails.totalFailures,
+    totalErrors: testDetails.totalErrors,
+    totalSkipped: testDetails.totalSkipped,
+    TestSuites: testDetails.TestSuites
+  }
 
   return res.json(details);
 }
@@ -373,7 +378,7 @@ async function insertTests(req, res, organizationId) {
     }
   }
 
-  res.sendStatus(200);
+  res.status(201).json({ message: 'Test report uploaded' });
 }
 
 module.exports = {

@@ -14,7 +14,6 @@
     import { onMounted, ref } from 'vue';
     import { useRouter } from 'vue-router';
     import { useStore } from 'vuex';
-    import Helpers from '@/helpers.js';
 
     const router = useRouter();
     const store = useStore();

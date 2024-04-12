@@ -2,51 +2,52 @@
   <v-container class="fill-height">
     <v-responsive class="d-flex align-top text-center fill-height">
       <template v-if="orgDataLoaded">
-        <v-btn
-          style="position: absolute; top: 0; right: 0;"
+        <v-card class="my-8" elevation="4" style="position: relative;">
+          <v-btn
+          style="position: absolute; top: 0; right: 0; background: none;"
           text
           elevation="0"
           size="50"
-          icon="mdi-cog"
-          @click="showSettings = !showSettings"
-        />
-        <v-dialog v-model="showSettings" max-width="350">
-          <v-card>
-            <v-card-title>Organization Settings</v-card-title>
-            <v-select
-              v-model="defaultOrg"
-              :items="orgNames"
-              label="Primary Organization"
-              class="mx-4"
-            />
-            <v-text-field
-              label="Organization UUID"
-              class="mx-4"
-              v-model="orgData.find(org => org.organizationName === defaultOrg).organizationUuid"
-              filled
-              :readonly="true"
-              append-inner-icon="mdi-content-copy"
-              @click:append-inner="copyUuid()" />
-            <v-card-actions>
-              <v-btn text @click="saveSettings">Save</v-btn>
-              <v-btn text @click="showSettings = !showSettings; showOrgJoin = !showOrgJoin">Join Organization</v-btn>
-            </v-card-actions>
-          </v-card>
-        </v-dialog>
-        <v-dialog v-model="showOrgJoin" max-width="350">
-          <v-card>
-            <v-card-title>Join Organization</v-card-title>
-            <v-text-field
-              label="Organization UUID"
-              class="mx-4"
-              v-model="newOrgUuid"
-              filled />
-            <v-card-actions>
-              <v-btn text @click="joinOrganization">Save</v-btn>
-            </v-card-actions>
-          </v-card>
-        </v-dialog>
-        <v-card class="my-8" elevation="4" style="position: relative;">
+          :ripple="false"
+          @click="showSettings = !showSettings">
+            <v-icon color="white" size="30">mdi-cog</v-icon>
+          </v-btn>
+          <v-dialog v-model="showSettings" max-width="350">
+            <v-card>
+              <v-card-title>Organization Settings</v-card-title>
+              <v-select
+                v-model="defaultOrg"
+                :items="orgNames"
+                label="Primary Organization"
+                class="mx-4"
+              />
+              <v-text-field
+                label="Organization UUID"
+                class="mx-4"
+                v-model="orgData.find(org => org.organizationName === defaultOrg).organizationUuid"
+                filled
+                :readonly="true"
+                append-inner-icon="mdi-content-copy"
+                @click:append-inner="copyUuid()" />
+              <v-card-actions>
+                <v-btn text @click="saveSettings">Save</v-btn>
+                <v-btn text @click="showSettings = !showSettings; showOrgJoin = !showOrgJoin">Join Organization</v-btn>
+              </v-card-actions>
+            </v-card>
+          </v-dialog>
+          <v-dialog v-model="showOrgJoin" max-width="350">
+            <v-card>
+              <v-card-title>Join Organization</v-card-title>
+              <v-text-field
+                label="Organization UUID"
+                class="mx-4"
+                v-model="newOrgUuid"
+                filled />
+              <v-card-actions>
+                <v-btn text @click="joinOrganization">Save</v-btn>
+              </v-card-actions>
+            </v-card>
+          </v-dialog>
           <Dashboard v-if="testDataLoaded" :test-data="testData" summary-type="Organization" />
           <DataList v-if="repoDataLoaded" :repo-data="repoData" data-type="Repositories" />
         </v-card>

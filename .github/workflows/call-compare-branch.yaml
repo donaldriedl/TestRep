@@ -21,7 +21,7 @@ jobs:
       - name: Install JQ
         run: |
           sudo apt-get update
-          sudo apt-get install jq
+          sudo apt-get install jq -y
       - name: Compare Branches
         run: |
           result=$(curl --location 'http://localhost:3001/${{ steps.repo.outputs.repo }}/${{ steps.branch.outputs.branch }}/compare' \

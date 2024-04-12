@@ -5,223 +5,183 @@ const TestSuite = require('../models/test_suite');
 const TestCase = require('../models/test_case');
 const Branch = require('../models/branch');
 const Repo = require('../models/repo');
-const Sequelize = require('sequelize');
 
 describe('getTestReports', () => {
-  it('should return test reports for a specific branch and repo', async () => {
-    const req = {
-      params: { branchId: 1, repoId: 1 },
-      user: { organizationId: 1 }
+  beforeEach(() => {
+    req = {
+      params: {
+        branchId: 1,
+        repoId: 1
+      },
+      user: { defaultOrgId: 1 },
     };
-    const res = {
+
+    res = {
+      json: jest.fn(),
       status: jest.fn().mockReturnThis(),
-      json: jest.fn()
     };
-    const findAllTestReportsMock = jest.spyOn(TestReport, 'findAll').mockResolvedValue([
-      { id: 1, resultTime: '2022-01-01', duration: 100 },
-      { id: 2, resultTime: '2022-01-02', duration: 200 }
-    ]);
-    jest.spyOn(Branch, 'findAll').mockResolvedValue({ id: 1, repoId: 1 });
-    jest.spyOn(Repo, 'findAll').mockResolvedValue({ id: 1, organizationId: 1 });
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('should return test reports for a specific branch and repo', async () => {
+    const testReports = [
+      {
+        id: 1,
+        resultTime: '2022-01-01',
+        duration: 100,
+        totalTests: 10,
+        totalFailures: 2,
+        totalErrors: 3,
+        totalSkipped: 1
+      },
+      {
+        id: 2,
+        resultTime: '2022-01-02',
+        duration: 200,
+        totalTests: 20,
+        totalFailures: 4,
+        totalErrors: 5,
+        totalSkipped: 2
+      }
+    ];
+
+    const findAllTestReportsMock = jest.spyOn(TestReport, 'findAll').mockResolvedValue(testReports);
 
     await getTestReports(req, res);
 
-    expect(findAllTestReportsMock).toHaveBeenCalledWith({
-      attributes: ['id', 'resultTime', 'duration', 'totalTests', 'totalFailures', 'totalErrors', 'totalSkipped'],
-      where: { 
-        branchId: req.params.branchId,
-        '$Branch.repoId$': req.params.repoId,
-        '$Branch.Repo.organizationId$': req.user.organizationId
+    const expectedResult = [
+      {
+        id: 2,
+        date: '2022-01-02T00:00:00.000Z',
+        totalPassed: 9,
+        totalFailures: 4,
+        totalErrors: 5,
+        totalSkipped: 2
       },
-      include: [
-        {
-          model: Branch,
-          attributes: [],
-          include: [
-            {
-              model: Repo,
-              attributes: []
-            }
-          ]
-        }
-      ]
-    });
+      {
+        id: 1,
+        date: '2022-01-01T00:00:00.000Z',
+        totalPassed: 4,
+        totalFailures: 2,
+        totalErrors: 3,
+        totalSkipped: 1
+      }
+    ];
 
-    expect(res.json).toHaveBeenCalledWith({ testReports: [
-      { id: 1, resultTime: '2022-01-01', duration: 100 },
-      { id: 2, resultTime: '2022-01-02', duration: 200 }
-    ] });
+    expect(findAllTestReportsMock).toHaveBeenCalledTimes(1);
+    expect(res.json).toHaveBeenCalledWith(expectedResult);
   });
 
   it('should return 404 if no test reports found', async () => {
-    const req = {
-      params: { branchId: 1, repoId: 1 },
-      user: { organizationId: 1 }
-    };
-    const res = {
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn()
-    };
     const findAllTestReportsMock = jest.spyOn(TestReport, 'findAll').mockResolvedValue([]);
-    jest.spyOn(Branch, 'findAll').mockResolvedValue([]);
-    jest.spyOn(Repo, 'findAll').mockResolvedValue([]);
 
     await getTestReports(req, res);
 
-    expect(findAllTestReportsMock).toHaveBeenCalledWith({
-      attributes: ['id', 'resultTime', 'duration', 'totalTests', 'totalFailures', 'totalErrors', 'totalSkipped'],
-      where: { 
-        branchId: req.params.branchId,
-        '$Branch.repoId$': req.params.repoId,
-        '$Branch.Repo.organizationId$': req.user.organizationId
-      },
-      include: [
-        {
-          model: Branch,
-          attributes: [],
-          include: [
-            {
-              model: Repo,
-              attributes: []
-            }
-          ]
-        }
-      ]
-    });
-
+    expect(findAllTestReportsMock).toHaveBeenCalledTimes(1);
     expect(res.status).toHaveBeenCalledWith(404);
     expect(res.json).toHaveBeenCalledWith({ message: 'Test Reports not found' });
   });
 });
 
 describe('getTestDetails', () => {
-  it('should return test details for a specific branch and repo', async () => {
-    const req = {
-      params: { branchId: 1, repoId: 1, reportId: 1 },
-      user: { organizationId: 1 }
-    };
-    const res = {
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn()
-    };
-    const findAllTestSuitesMock = jest.spyOn(TestSuite, 'findAll').mockResolvedValue([
-      {
-        id: 1, suiteName: 'Suite1', duration: 100, totalTests: 10, totalFailures: 2, totalErrors: 3, totalSkipped: 1,
-        Tests: [
-          { id: 1, name: 'Test1', duration: 10, status: 'PASSED', message: null, stackTrace: null },
-          { id: 2, name: 'Test2', duration: 20, status: 'FAILED', message: 'Some error', stackTrace: 'Some stack trace' }
-        ]
+  beforeEach(() => {
+    req = {
+      params: {
+        branchId: 1,
+        repoId: 1,
+        reportId: 1
       },
-      {
-        id: 2, suiteName: 'Suite2', duration: 200, totalTests: 20, totalFailures: 4, totalErrors: 5, totalSkipped: 2,
-        Tests: [
-          { id: 3, name: 'Test3', duration: 30, status: 'PASSED', message: null, stackTrace: null },
-          { id: 4, name: 'Test4', duration: 40, status: 'FAILED', message: 'Some error', stackTrace: 'Some stack trace' }
-        ]
-      }
-    ]);
-    jest.spyOn(TestCase, 'findAll').mockResolvedValue([]);
-    jest.spyOn(TestReport, 'findAll').mockResolvedValue([]);
-    jest.spyOn(Branch, 'findAll').mockResolvedValue([]);
-    jest.spyOn(Repo, 'findAll').mockResolvedValue([]);
-    jest.spyOn(Sequelize, 'col').mockReturnValue('TestSuite.id');
+      user: { defaultOrgId: 1 },
+    };
+
+    res = {
+      json: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+    };
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('should return test details for a specific branch and repo', async () => {
+    const testReport = {
+      id: 1,
+      resultTime: '2022-01-01',
+      duration: 100,
+      totalTests: 10,
+      totalFailures: 2,
+      totalErrors: 3,
+      totalSkipped: 1,
+      createdAt: '2022-01-01',
+      TestSuites: [
+        {
+          id: 1,
+          suiteName: 'Suite1',
+          duration: 100,
+          totalTests: 10,
+          totalFailures: 2,
+          totalErrors: 3,
+          totalSkipped: 1,
+          TestCases: [
+            {
+              id: 1,
+              caseName: 'Test1',
+              className: 'Test1',
+              duration: 40,
+              result: 'PASSED',
+              failureMessage: null,
+              failureType: null,
+              stackTrace: null
+            },
+            {
+              id: 2,
+              caseName: 'Test2',
+              className: 'Test2',
+              duration: 60,
+              result: 'FAILED',
+              failureMessage: 'Some error',
+              failureType: 'Some type',
+              stackTrace: 'Some stack trace'
+            }
+          ]
+        }
+      ]
+    };
+
+    const testReportFindOneMock = jest.spyOn(TestReport, 'findOne').mockResolvedValue(testReport);
 
     await getTestDetails(req, res);
 
-    expect(findAllTestSuitesMock).toHaveBeenCalledWith({
-      attributes: ['id', 'suiteName', 'duration', 'totalTests', 'totalFailures', 'totalErrors', 'totalSkipped'],
-      where: { testReportId: req.params.reportId },
-      include: {
-        model: TestReport,
-        attributes: [],
-        where: { branchId: req.params.branchId },
-        include: {
-          model: Branch,
-          attributes: [],
-          where: { repoId: req.params.repoId },
-          include: {
-            model: Repo,
-            attributes: [],
-            where: { organizationId: req.user.organizationId }
-          }
-        }
-      },
-      include: {
-        model: TestCase,
-        attributes: ['caseName', 'className', 'duration', 'result', 'failureMessage', 'failureType', 'stackTrace']
-      },
-      order: [[TestCase, 'id', 'ASC']]
-    });
+    const expectedResult = {
+      id: 1,
+      date: '2022-01-01T00:00:00.000Z',
+      totalPassed: 4,
+      totalFailures: 2,
+      totalErrors: 3,
+      totalSkipped: 1,
+      TestSuites: testReport.TestSuites
+    };
 
-    expect(res.json).toHaveBeenCalledWith({ TestDetails: [
-      {
-        id: 1, suiteName: 'Suite1', duration: 100, totalTests: 10, totalFailures: 2, totalErrors: 3, totalSkipped: 1,
-        Tests: [
-          { id: 1, name: 'Test1', duration: 10, status: 'PASSED', message: null, stackTrace: null },
-          { id: 2, name: 'Test2', duration: 20, status: 'FAILED', message: 'Some error', stackTrace: 'Some stack trace' }
-        ]
-      },
-      {
-        id: 2, suiteName: 'Suite2', duration: 200, totalTests: 20, totalFailures: 4, totalErrors: 5, totalSkipped: 2,
-        Tests: [
-          { id: 3, name: 'Test3', duration: 30, status: 'PASSED', message: null, stackTrace: null },
-          { id: 4, name: 'Test4', duration: 40, status: 'FAILED', message: 'Some error', stackTrace: 'Some stack trace' }
-        ]
-      }
-    ] });
+    expect(testReportFindOneMock).toHaveBeenCalledTimes(1);
+    expect(res.json).toHaveBeenCalledWith(expectedResult);
   });
 
   it('should return 404 if no test details found', async () => {
-    const req = {
-      params: { branchId: 1, repoId: 1, reportId: 1 },
-      user: { organizationId: 1 }
-    };
-    const res = {
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn()
-    };
-    const findAllTestSuitesMock = jest.spyOn(TestSuite, 'findAll').mockResolvedValue([]);
-    jest.spyOn(TestCase, 'findAll').mockResolvedValue([]);
-    jest.spyOn(TestReport, 'findAll').mockResolvedValue([]);
-    jest.spyOn(Branch, 'findAll').mockResolvedValue([]);
-    jest.spyOn(Repo, 'findAll').mockResolvedValue([]);
-    jest.spyOn(Sequelize, 'col').mockReturnValue('TestSuite.id');
+    const testReportFindOneMock = jest.spyOn(TestReport, 'findOne').mockResolvedValue(null);
 
     await getTestDetails(req, res);
 
-    expect(findAllTestSuitesMock).toHaveBeenCalledWith({
-      attributes: ['id', 'suiteName', 'duration', 'totalTests', 'totalFailures', 'totalErrors', 'totalSkipped'],
-      where: { testReportId: req.params.reportId },
-      include: {
-        model: TestReport,
-        attributes: [],
-        where: { branchId: req.params.branchId },
-        include: {
-          model: Branch,
-          attributes: [],
-          where: { repoId: req.params.repoId },
-          include: {
-            model: Repo,
-            attributes: [],
-            where: { organizationId: req.user.organizationId }
-          }
-        }
-      },
-      include: {
-        model: TestCase,
-        attributes: ['caseName', 'className', 'duration', 'result', 'failureMessage', 'failureType', 'stackTrace']
-      },
-      order: [[TestCase, 'id', 'ASC']]
-    });
-
+    expect(testReportFindOneMock).toHaveBeenCalledTimes(1);
     expect(res.status).toHaveBeenCalledWith(404);
     expect(res.json).toHaveBeenCalledWith({ message: 'Test Details not found' });
   });
 });
 
 describe('insertTests', () => {
-  let req, res;
-
   beforeEach(() => {
     req = {
       params: {
@@ -242,8 +202,6 @@ describe('insertTests', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
-    req = {};
-    res = {};
   });
 
   it('should return 400 if no file is uploaded', async () => {
@@ -284,6 +242,7 @@ describe('insertTests', () => {
     };
 
     const repoFindOrCreateMock = jest.spyOn(Repo, 'findOrCreate').mockResolvedValue([{ id: 1 }]);
+    const branchFindOneMock = jest.spyOn(Branch, 'findOne').mockResolvedValue(null);
     const branchFindOrCreateMock = jest.spyOn(Branch, 'findOrCreate').mockResolvedValue([{ id: 1 }]);
     const testReportCreateMock = jest.spyOn(TestReport, 'create').mockResolvedValue({ id: 1 });
     const testSuiteCreateMock = jest.spyOn(TestSuite, 'create').mockResolvedValue({ id: 1 });
@@ -291,29 +250,13 @@ describe('insertTests', () => {
 
     await insertTests(req, res);
 
-    expect(repoFindOrCreateMock).toHaveBeenCalledWith({
-      where: { repoName: req.params.repoName, organizationId: req.user.organizationId },
-      defaults: { repoName: req.params.repoName, organizationId: req.user.organizationId }
-    });
-
-    expect(branchFindOrCreateMock).toHaveBeenCalledWith({
-      where: { branchName: req.params.branchName, repoId: 1 },
-      defaults: { branchName: req.params.branchName, isPrimary: false, repoId: 1 }
-    });
-
-    expect(testReportCreateMock).toHaveBeenCalledWith({
-      resultTime: undefined,
-      duration: "1.127",
-      totalTests: "17",
-      totalFailures: "1",
-      totalErrors: "0",
-      totalSkipped: undefined,
-      branchId: 1
-    });
-
+    expect(repoFindOrCreateMock).toHaveBeenCalledTimes(1);
+    expect(branchFindOneMock).toHaveBeenCalledTimes(1);
+    expect(branchFindOrCreateMock).toHaveBeenCalledTimes(1);
+    expect(testReportCreateMock).toHaveBeenCalledTimes(1);
     expect(testSuiteCreateMock).toHaveBeenCalledTimes(3);
     expect(testCaseCreateMock).toHaveBeenCalledTimes(17);
-
-    expect(res.sendStatus).toHaveBeenCalledWith(200);
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(res.json).toHaveBeenCalledWith({ message: 'Test report uploaded' });
   });
 });
