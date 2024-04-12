@@ -1,12 +1,10 @@
 const { v4 } = require('uuid');
-const { createUser, getOrganizations } = require('../server/registration.js');
+const { createOrganization, createUser, getOrganizations, joinOrganization, updateDefaultOrganization } = require('../server/registration.js');
 const Organization = require('../models/organization.js');
 const Membership = require('../models/membership.js');
 const User = require('../models/user.js');
 
 describe('createUser', () => {
-  let req, res;
-
   beforeEach(() => {
     req = {
       body: {
@@ -40,6 +38,16 @@ describe('createUser', () => {
     expect(res.json).toHaveBeenCalledWith({ message: 'User created successfully' });
   });
 
+  it('should handle organization not found and return 404', async () => {
+    organizationFindOneMock = jest.spyOn(Organization, 'findOne').mockResolvedValue(null);
+
+    await createUser(req, res);
+
+    expect(organizationFindOneMock).toHaveBeenCalledTimes(1);
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.json).toHaveBeenCalledWith({ message: 'Organization not found' });
+  });
+
   it('should handle SequelizeUniqueConstraintError and return 400', async () => {
     organizationFindOneMock = jest.spyOn(Organization, 'findOne').mockResolvedValue({ id: 1 });
     saveUserMock = jest.spyOn(User.prototype, 'save').mockRejectedValue({ name: 'SequelizeUniqueConstraintError' });
@@ -70,8 +78,6 @@ describe('createUser', () => {
 });
 
 describe('getOrganizations', () => {
-  let req, res;
-
   beforeEach(() => {
     req = {
       user: {
@@ -82,7 +88,6 @@ describe('getOrganizations', () => {
     res = {
       json: jest.fn(),
       status: jest.fn().mockReturnThis(),
-      sendStatus: jest.fn(),
     };
   });
 
@@ -139,5 +144,149 @@ describe('getOrganizations', () => {
     expect(findAllOrganizationsMock).toHaveBeenCalledTimes(1);
     expect(res.status).toHaveBeenCalledWith(404);
     expect(res.json).toHaveBeenCalledWith({ message: 'No organizations found' });
+  });
+});
+
+describe('createOrganization', () => {
+  beforeEach(() => {
+    req = {
+      body: { orgName: 'Test Org' },
+    };
+
+    res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    };
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('should create organization successfully', async () => {
+    saveOrganizationMock = jest.spyOn(Organization.prototype, 'save').mockResolvedValue();
+
+    await createOrganization(req, res);
+
+    expect(saveOrganizationMock).toHaveBeenCalledTimes(1);
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(res.json).toHaveBeenCalledWith({ uuid: expect.anything() });
+  });
+
+  it('should handle duplicate value insertion and return 400', async () => {
+    saveOrganizationMock = jest.spyOn(Organization.prototype, 'save').mockRejectedValue({ name: 'SequelizeUniqueConstraintError' });
+
+    await createOrganization(req, res);
+
+    expect(saveOrganizationMock).toHaveBeenCalledTimes(1);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({ message: 'Organization name already exists' });
+  });
+
+  it('should handle errors and return 500', async () => {
+    saveOrganizationMock = jest.spyOn(Organization.prototype, 'save').mockRejectedValue(new Error('Some error'));
+
+    await createOrganization(req, res);
+
+    expect(saveOrganizationMock).toHaveBeenCalledTimes(1);
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith({ message: 'Internal server error' });
+  });
+});
+
+describe('updateDefaultOrganization', () => {
+  beforeEach(() => {
+    req = {
+      params: { orgId: 1 },
+      user: {
+        defaultOrgId: 2,
+        save: jest.fn(),
+      },
+    };
+
+    res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    };
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('should update default organization successfully', async () => {
+    orgFindOneMock = jest.spyOn(Organization, 'findByPk').mockResolvedValue({ id: 1 });
+
+    await updateDefaultOrganization(req, res);
+
+    expect(req.user.defaultOrgId).toBe(1);
+    expect(req.user.save).toHaveBeenCalledTimes(1);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({ message: 'Default organization updated successfully' });
+  });
+
+  it('should handle organization not found and return 404', async () => {
+    orgFindOneMock = jest.spyOn(Organization, 'findByPk').mockResolvedValue(null);
+
+    await updateDefaultOrganization(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.json).toHaveBeenCalledWith({ message: 'Organization not found' });
+  });
+
+  it('should handle errors and return 500', async () => {
+    orgFindOneMock = jest.spyOn(Organization, 'findByPk').mockRejectedValue(new Error('Some error'));
+
+    await updateDefaultOrganization(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith({ message: 'Internal server error' });
+  });
+});
+
+describe('joinOrganization', () => {
+  beforeEach(() => {
+    req = {
+      body: { organizationUuid: v4() },
+      user: { id: 1 },
+    };
+
+    res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    };
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('should join organization successfully', async () => {
+    getOrganizationByUuidMock = jest.spyOn(Organization, 'findOne').mockResolvedValue({ id: 1 });
+    saveMembershipMock = jest.spyOn(Membership.prototype, 'save').mockResolvedValue();
+
+    await joinOrganization(req, res);
+
+    expect(saveMembershipMock).toHaveBeenCalledTimes(1);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({ message: 'User joined organization successfully' });
+  });
+
+  it('should handle organization not found and return 404', async () => {
+    getOrganizationByUuidMock = jest.spyOn(Organization, 'findOne').mockResolvedValue(null);
+
+    await joinOrganization(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.json).toHaveBeenCalledWith({ message: 'Organization not found' });
+  });
+
+  it('should handle errors and return 500', async () => {
+    getOrganizationByUuidMock = jest.spyOn(Organization, 'findOne').mockRejectedValue(new Error('Some error'));
+
+    await joinOrganization(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith({ message: 'Internal server error' });
   });
 });

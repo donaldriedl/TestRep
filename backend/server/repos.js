@@ -136,6 +136,10 @@ async function getBranchIdByName(branchName, repoName, orgId) {
     }
   });
 
+  if (!branch) {
+    return null;
+  }
+
   return branch.id;
 }
 
@@ -160,6 +164,10 @@ async function getPrimaryBranchId(repoName, orgId) {
     }
   });
 
+  if (!branch) {
+    return null;
+  }
+
   return branch.id;
 }
 
@@ -171,6 +179,10 @@ async function updatePrimaryBranch(req, res) {
     }
   });
 
+  if (!branch) {
+    return res.status(404).json({ message: 'Branch not found' });
+  }
+
   const repo = await Repo.findOne({
     where: {
       id: branch.repoId,
@@ -178,8 +190,8 @@ async function updatePrimaryBranch(req, res) {
     }
   });
 
-  if (!branch || !repo) {
-    return res.status(404).json({ message: 'Branch not found' });
+  if (!repo) {
+    return res.status(404).json({ message: 'Repo not found' });
   }
 
   await Branch.update({ isPrimary: false }, {

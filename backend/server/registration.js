@@ -60,7 +60,7 @@ async function updateDefaultOrganization(req, res) {
     req.user.defaultOrgId = orgId;
     await req.user.save();
 
-    res.sendStatus(200);
+    res.status(200).json({ message: 'Default organization updated successfully' });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: 'Internal server error' });
@@ -79,7 +79,7 @@ async function joinOrganization(req, res) {
     const membership = new Membership({ userId: req.user.id, organizationId: organization.id });
     await membership.save();
 
-    res.sendStatus(200);
+    res.status(200).json({ message: 'User joined organization successfully' });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: 'Internal server error' });

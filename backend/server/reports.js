@@ -22,13 +22,12 @@ async function getBranchSummary(req, res) {
 
 async function getBranchCompare(req, res, orgId) {
   const primaryBranchId = await getPrimaryBranchId(req.params.repoName, orgId);
-  console.log(`primaryBranchId: ${primaryBranchId}`)
   const branchId = await getBranchIdByName(req.params.branchName, req.params.repoName, orgId);
   if (!primaryBranchId) {
     return res.status(404).json({ message: 'Primary branch not found' });
   }
 
-  if (req.params.branchId === primaryBranchId) {
+  if (branchId === primaryBranchId) {
     return res.status(400).json({ message: 'Cannot compare a branch to itself' });
   }
 

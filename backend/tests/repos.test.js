@@ -1,4 +1,4 @@
-const { getRepos, getBranches } = require('../server/repos.js');
+const { getRepos, getBranches, getBranchIdByName, getPrimaryBranchId, updatePrimaryBranch } = require('../server/repos.js');
 const Repo = require('../models/repo');
 const Branch = require('../models/branch');
 
@@ -150,5 +150,142 @@ describe('getBranches', () => {
     expect(branchFindAllMock).toHaveBeenCalledTimes(1);
     expect(res.status).toHaveBeenCalledWith(404);
     expect(res.json).toHaveBeenCalledWith({ message: 'Branches not found' });
+  });
+});
+
+describe('getBranchIdByName', () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('should return the branch id when it exists', async () => {
+    const expectedBranchId = 1;
+    repoFindOneMock = jest.spyOn(Repo, 'findOne').mockResolvedValue({ id: 1 });
+    branchFindOneMock = jest.spyOn(Branch, 'findOne').mockResolvedValue({ id: expectedBranchId });
+
+    const branchId = await getBranchIdByName('Branch 1', 'Repo 1', 1);
+
+    expect(branchFindOneMock).toHaveBeenCalledTimes(1);
+    expect(branchId).toBe(expectedBranchId);
+  });
+
+  it('should return null when the repo does not exist', async () => {
+    repoFindOneMock = jest.spyOn(Repo, 'findOne').mockResolvedValue(null);
+
+    const branchId = await getBranchIdByName('Branch 1', 'Repo 1', 1);
+
+    expect(branchFindOneMock).toHaveBeenCalledTimes(1);
+    expect(branchId).toBeNull();
+  });
+
+  it('should return null when the branch does not exist', async () => {
+    repoFindOneMock = jest.spyOn(Repo, 'findOne').mockResolvedValue({ id: 1 });
+    branchFindOneMock = jest.spyOn(Branch, 'findOne').mockResolvedValue(null);
+
+    const branchId = await getBranchIdByName('Branch 1', 'Repo 1', 1);
+
+    expect(repoFindOneMock).toHaveBeenCalledTimes(1);
+    expect(branchFindOneMock).toHaveBeenCalledTimes(1);
+    expect(branchId).toBeNull();
+  });
+});
+
+describe('getPrimaryBranchId', () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('should return the primary branch id when it exists', async () => {
+    const expectedBranchId = 1;
+    repoFindOneMock = jest.spyOn(Repo, 'findOne').mockResolvedValue({ id: 1 });
+    branchFindOneMock = jest.spyOn(Branch, 'findOne').mockResolvedValue({ id: expectedBranchId });
+
+    const branchId = await getPrimaryBranchId(1);
+
+    expect(repoFindOneMock).toHaveBeenCalledTimes(1);
+    expect(branchFindOneMock).toHaveBeenCalledTimes(1);
+    expect(branchId).toBe(expectedBranchId);
+  });
+
+  it('should return null when the repo does not exist', async () => {
+    repoFindOneMock = jest.spyOn(Repo, 'findOne').mockResolvedValue(null);
+
+    const branchId = await getPrimaryBranchId(1);
+
+    expect(repoFindOneMock).toHaveBeenCalledTimes(1);
+    expect(branchId).toBeNull();
+  });
+
+  it('should return null when the primary branch does not exist', async () => {
+    repoFindOneMock = jest.spyOn(Repo, 'findOne').mockResolvedValue({ id: 1 });
+    branchFindOneMock = jest.spyOn(Branch, 'findOne').mockResolvedValue(null);
+
+    const branchId = await getPrimaryBranchId(1);
+
+    expect(branchFindOneMock).toHaveBeenCalledTimes(1);
+    expect(branchId).toBeNull();
+  });
+});
+
+describe('updatePrimaryBranch', () => {
+  beforeEach(() => {
+    req = {
+      body: { primaryBranch: 1 },
+      user: { defaultOrgId: 1 },
+    };
+
+    res = {
+      json: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+    };
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('should update the primary branch successfully', async () => {
+    const branchId = 1;
+    branchFindOneMock = jest.spyOn(Branch, 'findOne').mockResolvedValue({ id: branchId });
+    repoFindOneMock = jest.spyOn(Repo, 'findOne').mockResolvedValue({ id: 1 });
+    branchUpdateMock = jest.spyOn(Branch, 'update').mockResolvedValue(1);
+
+    await updatePrimaryBranch(req, res);
+
+    expect(branchFindOneMock).toHaveBeenCalledTimes(1);
+    expect(branchUpdateMock).toHaveBeenCalledTimes(2);
+    expect(res.json).toHaveBeenCalledWith({ message: 'Primary branch updated' });
+  });
+
+  it('should return 404 when the branch does not exist', async () => {
+    branchFindOneMock = jest.spyOn(Branch, 'findOne').mockResolvedValue(null);
+
+    await updatePrimaryBranch(req, res);
+
+    expect(branchFindOneMock).toHaveBeenCalledTimes(1);
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.json).toHaveBeenCalledWith({ message: 'Branch not found' });
+  });
+
+  it('should return 404 when the branch does not exist', async () => {
+    branchFindOneMock = jest.spyOn(Branch, 'findOne').mockResolvedValue({ id: 1 });
+    repoFindOneMock = jest.spyOn(Repo, 'findOne').mockResolvedValue(null);
+
+    await updatePrimaryBranch(req, res);
+
+    expect(repoFindOneMock).toHaveBeenCalledTimes(1);
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.json).toHaveBeenCalledWith({ message: 'Repo not found' });
+  });
+
+  it('should return 404 when the repo does not exist', async () => {
+    branchFindOneMock = jest.spyOn(Branch, 'findOne').mockResolvedValue({ id: 1 });
+    repoFindOneMock = jest.spyOn(Repo, 'findOne').mockResolvedValue(null);
+
+    await updatePrimaryBranch(req, res);
+
+    expect(repoFindOneMock).toHaveBeenCalledTimes(1);
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.json).toHaveBeenCalledWith({ message: 'Repo not found' });
   });
 });

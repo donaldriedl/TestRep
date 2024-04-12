@@ -1,5 +1,13 @@
 const fs = require('fs');
-const { getTestReports, getTestDetails, insertTests } = require('../server/tests');
+const {
+  compareBranchTests,
+  getBranchTestSummary,
+  getOrganizationTestSummary,
+  getRepoTestSummary,
+  getTestReports,
+  getTestDetails,
+  insertTests
+} = require('../server/tests');
 const TestReport = require('../models/test_report');
 const TestSuite = require('../models/test_suite');
 const TestCase = require('../models/test_case');
@@ -258,5 +266,304 @@ describe('insertTests', () => {
     expect(testCaseCreateMock).toHaveBeenCalledTimes(17);
     expect(res.status).toHaveBeenCalledWith(201);
     expect(res.json).toHaveBeenCalledWith({ message: 'Test report uploaded' });
+  });
+});
+
+describe('getOrganizationTestSummary', () => {
+  beforeEach(() => {
+    req = { user: { defaultOrgId: 1 } };
+
+    res = {
+      json: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+    };
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('should return test summary for an organization', async () => {
+    const lastThirtyDays = new Date();
+    lastThirtyDays.setDate(lastThirtyDays.getDate() - 30);
+    const currentTime = new Date().toISOString();
+
+    const testReports = [
+      {
+        toJSON: () => ({
+          date: currentTime,
+          totalTests: 10,
+          totalFailures: 2,
+          totalErrors: 3,
+          totalSkipped: 1
+        })
+      },
+      {
+        toJSON: () => ({
+          date: lastThirtyDays.toISOString(),
+          totalTests: 20,
+          totalFailures: 4,
+          totalErrors: 5,
+          totalSkipped: 2
+        })
+      }
+    ];
+
+    const findAllTestReportsMock = jest.spyOn(TestReport, 'findAll').mockResolvedValue(testReports);
+
+    const result = await getOrganizationTestSummary(req);
+
+    const expectedResult = [
+      {
+        date: currentTime,
+        totalPassed: 4,
+        totalErrors: 3,
+        totalFailures: 2,
+        totalSkipped: 1,
+        totalTests: 10
+      },
+      {
+        date: lastThirtyDays.toISOString(),
+        totalPassed: 9,
+        totalErrors: 5,
+        totalFailures: 4,
+        totalSkipped: 2,
+        totalTests: 20
+      }
+    ]
+
+    expect(findAllTestReportsMock).toHaveBeenCalledTimes(1);
+    expect(result).toEqual(expectedResult);
+  });
+
+  it('should return null if no test reports found', async () => {
+    const findAllTestReportsMock = jest.spyOn(TestReport, 'findAll').mockResolvedValue([]);
+
+    const result = await getOrganizationTestSummary(req);
+
+    expect(findAllTestReportsMock).toHaveBeenCalledTimes(1);
+    expect(result).toBeNull();
+  });
+});
+
+describe('getRepoTestSummary', () => {
+  beforeEach(() => {
+    req = {
+      params: { repoId: 1 },
+      user: { defaultOrgId: 1 },
+    };
+
+    res = {
+      json: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+    };
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('should return test summary for a repo', async () => {
+    const lastThirtyDays = new Date();
+    lastThirtyDays.setDate(lastThirtyDays.getDate() - 30);
+    const currentTime = new Date().toISOString();
+
+    const testReports = [
+      {
+        toJSON: () => ({
+          date: currentTime,
+          totalTests: 10,
+          totalFailures: 2,
+          totalErrors: 3,
+          totalSkipped: 1
+        })
+      },
+      {
+        toJSON: () => ({
+          date: lastThirtyDays.toISOString(),
+          totalTests: 20,
+          totalFailures: 4,
+          totalErrors: 5,
+          totalSkipped: 2
+        })
+      }
+    ];
+
+    const findAllTestReportsMock = jest.spyOn(TestReport, 'findAll').mockResolvedValue(testReports);
+
+    const result = await getRepoTestSummary(req);
+
+    const expectedResult = [
+      {
+        date: currentTime,
+        totalPassed: 4,
+        totalErrors: 3,
+        totalFailures: 2,
+        totalSkipped: 1,
+        totalTests: 10
+      },
+      {
+        date: lastThirtyDays.toISOString(),
+        totalPassed: 9,
+        totalErrors: 5,
+        totalFailures: 4,
+        totalSkipped: 2,
+        totalTests: 20
+      }
+    ]
+
+    expect(findAllTestReportsMock).toHaveBeenCalledTimes(1);
+    expect(result).toEqual(expectedResult);
+  });
+
+  it('should return null if no test reports found', async () => {
+    const findAllTestReportsMock = jest.spyOn(TestReport, 'findAll').mockResolvedValue([]);
+
+    const result = await getRepoTestSummary(req);
+
+    expect(findAllTestReportsMock).toHaveBeenCalledTimes(1);
+    expect(result).toBeNull();
+  });
+});
+
+describe('getBranchTestSummary', () => {
+  beforeEach(() => {
+    req = {
+      params: {
+        repoId: 1,
+        branchId: 1
+      },
+      user: { defaultOrgId: 1 },
+    };
+
+    res = {
+      json: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+    };
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('should return test summary for a branch', async () => {
+    const lastThirtyDays = new Date();
+    lastThirtyDays.setDate(lastThirtyDays.getDate() - 30);
+    const currentTime = new Date().toISOString();
+
+    const testReports = [
+      {
+        toJSON: () => ({
+          date: currentTime,
+          totalTests: 10,
+          totalFailures: 2,
+          totalErrors: 3,
+          totalSkipped: 1
+        })
+      },
+      {
+        toJSON: () => ({
+          date: lastThirtyDays.toISOString(),
+          totalTests: 20,
+          totalFailures: 4,
+          totalErrors: 5,
+          totalSkipped: 2
+        })
+      }
+    ];
+
+    const findAllTestReportsMock = jest.spyOn(TestReport, 'findAll').mockResolvedValue(testReports);
+
+    const result = await getBranchTestSummary(req);
+
+    const expectedResult = [
+      {
+        date: currentTime,
+        totalPassed: 4,
+        totalErrors: 3,
+        totalFailures: 2,
+        totalSkipped: 1,
+        totalTests: 10
+      },
+      {
+        date: lastThirtyDays.toISOString(),
+        totalPassed: 9,
+        totalErrors: 5,
+        totalFailures: 4,
+        totalSkipped: 2,
+        totalTests: 20
+      }
+    ]
+
+    expect(findAllTestReportsMock).toHaveBeenCalledTimes(1);
+    expect(result).toEqual(expectedResult);
+  });
+
+  it('should return null if no test reports found', async () => {
+    const findAllTestReportsMock = jest.spyOn(TestReport, 'findAll').mockResolvedValue([]);
+
+    const result = await getBranchTestSummary(req);
+
+    expect(findAllTestReportsMock).toHaveBeenCalledTimes(1);
+    expect(result).toBeNull();
+  });
+});
+
+describe('compareBranchTests', () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('should return a test comparison', async () => {
+    const branchId = 1;
+    const primaryBranchId = 2;
+
+    const branchTests = {
+      totalTests: 10,
+      totalFailures: 2,
+      totalErrors: 1,
+      totalSkipped: 3
+    };
+    
+    const primaryBranchTests = {
+      totalTests: 20,
+      totalFailures: 4,
+      totalErrors: 2,
+      totalSkipped: 5
+    };
+
+    const testReportFindOneMock = jest.spyOn(TestReport, 'findOne').mockImplementation((query) => {
+      if (query.where.branchId === 1) {
+        return branchTests;
+      } else if (query.where.branchId === 2) {
+        return primaryBranchTests;
+      }
+    });
+
+    const result = await compareBranchTests(branchId, primaryBranchId);
+
+    const expectedResult = {
+      primaryBranch: {
+        totalPassed: 9,
+        totalFailures: 4,
+        totalErrors: 2,
+        totalSkipped: 5
+      },
+      branch: {
+        totalPassed: 4,
+        totalFailures: 2,
+        totalErrors: 1,
+        totalSkipped: 3
+      },
+      difference: {
+        totalPassed: -5,
+        totalFailures: -2,
+        totalErrors: -1,
+        totalSkipped: -2
+      }
+    };
+
+    expect(testReportFindOneMock).toHaveBeenCalledTimes(2);
+    expect(result).toEqual(expectedResult);
   });
 });
