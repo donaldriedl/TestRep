@@ -125,7 +125,6 @@
 
   onMounted(() => {
     generateReportChart();
-    console.log(props.suiteData);
     props.suiteData.forEach(suite => {
       suite.totalPassed = suite.totalTests - (suite.totalFailures + suite.totalErrors + suite.totalSkipped);
     })
