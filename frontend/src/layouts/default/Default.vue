@@ -38,7 +38,6 @@
 
     if (response.status === 200) {
       const data = await response.json()
-      console.log(data);
       store.commit('setUser', data);
       if (router.currentRoute.value.path === '/') {
         router.push('/dashboard');

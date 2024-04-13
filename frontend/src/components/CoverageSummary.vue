@@ -94,7 +94,6 @@
   ]);
 
   onMounted(() => {
-    console.log(props.coverageData.coverageFiles);
     generateReportChart();
   });
 

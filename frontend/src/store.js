@@ -46,7 +46,6 @@ export default createStore({
 
       if (Helpers.validateResponse(response)) {
         const user = await response.json();
-        console.log(user);
         commit('setUser', user);
       } else {
         commit('showError', 'Invalid email or password');

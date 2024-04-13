@@ -1,5 +1,13 @@
 const fs = require('fs');
-const { getCoverageReports, getCoverageDetails, uploadCoverageReport } = require('../server/coverage');
+const {
+  compareBranchCoverage,
+  getCoverageReports,
+  getCoverageDetails,
+  getBranchCoverageSummary,
+  getOrganizationCoverageSummary,
+  getRepoCoverageSummary,
+  uploadCoverageReport
+} = require('../server/coverage');
 const Repo = require('../models/repo');
 const Branch = require('../models/branch');
 const CoverageReport = require('../models/coverage_report');
@@ -177,9 +185,7 @@ describe('uploadCoverageReport', () => {
         repoName: 'testRepo',
         branchName: 'testBranch'
       },
-      user: {
-        organizationId: 1
-      }
+      user: { organizationId: 1 }
     };
 
     res = {
@@ -190,8 +196,6 @@ describe('uploadCoverageReport', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
-    req = {};
-    res = {};
   });
 
   it('should upload a coverage report', async () => {
@@ -258,5 +262,261 @@ describe('uploadCoverageReport', () => {
 
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.json).toHaveBeenCalledWith({ message: 'Invalid XML format' });
+  });
+});
+
+describe('getOrganizationCoverageSummary', () => {
+  beforeEach(() => {
+    req = { user: { defaultOrgId: 1 } };
+
+    res = {
+      json: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+    };
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('should return organization coverage summary', async () => {
+    const lastThirtyDays = new Date();
+    lastThirtyDays.setDate(lastThirtyDays.getDate() - 30);
+    const currentTime = new Date().toISOString();
+
+    const coverageReports = [
+      {
+        toJSON: jest.fn().mockReturnValue({
+          date: lastThirtyDays.toISOString(),
+          branchRate: 0.8,
+          lineRate: 0.9,
+        }),
+      },
+      {
+        toJSON: jest.fn().mockReturnValue({
+          date: currentTime,
+          branchRate: 0.7,
+          lineRate: 0.8,
+        })
+      },
+    ];
+
+    const coverageReportFindAllMock = jest.spyOn(CoverageReport, 'findAll').mockResolvedValue(coverageReports);
+
+    const result = await getOrganizationCoverageSummary(req);
+
+    const expectedResult = [
+      {
+        date: lastThirtyDays.toISOString(),
+        branchRate: 0.8,
+        lineRate: 0.9,
+      },
+      {
+        date: currentTime,
+        branchRate: 0.7,
+        lineRate: 0.8,
+      },
+    ];
+
+    expect(coverageReportFindAllMock).toHaveBeenCalledTimes(1);
+    expect(result).toEqual(expectedResult);
+  });
+
+  it('should return null if no coverage reports exist', async () => {
+    const coverageReportFindAllMock = jest.spyOn(CoverageReport, 'findAll').mockResolvedValue([]);
+
+    const result = await getOrganizationCoverageSummary(req);
+
+    expect(coverageReportFindAllMock).toHaveBeenCalledTimes(1);
+    expect(result).toBeNull();
+  });
+});
+
+describe('getRepoCoverageSummary', () => {
+  beforeEach(() => {
+    req = {
+      params: { repoId: 'repoId' },
+      user: { defaultOrgId: 1 },
+    };
+
+    res = {
+      json: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+    };
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('should return repo coverage summary', async () => {
+    const lastThirtyDays = new Date();
+    lastThirtyDays.setDate(lastThirtyDays.getDate() - 30);
+    const currentTime = new Date().toISOString();
+
+    const coverageReports = [
+      {
+        toJSON: jest.fn().mockReturnValue({
+          date: lastThirtyDays.toISOString(),
+          branchRate: 0.8,
+          lineRate: 0.9,
+        }),
+      },
+      {
+        toJSON: jest.fn().mockReturnValue({
+          date: currentTime,
+          branchRate: 0.7,
+          lineRate: 0.8,
+        })
+      },
+    ];
+
+    const coverageReportFindAllMock = jest.spyOn(CoverageReport, 'findAll').mockResolvedValue(coverageReports);
+
+    const result = await getRepoCoverageSummary(req);
+
+    const expectedResult = [
+      {
+        date: lastThirtyDays.toISOString(),
+        branchRate: 0.8,
+        lineRate: 0.9,
+      },
+      {
+        date: currentTime,
+        branchRate: 0.7,
+        lineRate: 0.8,
+      },
+    ];
+
+    expect(coverageReportFindAllMock).toHaveBeenCalledTimes(1);
+    expect(result).toEqual(expectedResult);
+  });
+
+  it('should return null if no coverage reports exist', async () => {
+    const coverageReportFindAllMock = jest.spyOn(CoverageReport, 'findAll').mockResolvedValue([]);
+
+    const result = await getRepoCoverageSummary(req);
+
+    expect(coverageReportFindAllMock).toHaveBeenCalledTimes(1);
+    expect(result).toBeNull();
+  });
+});
+
+describe('getBranchCoverageSummary', () => {
+  beforeEach(() => {
+    req = {
+      params: { branchId: 'branchId' },
+      user: { defaultOrgId: 1 },
+    };
+
+    res = {
+      json: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+    };
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('should return branch coverage summary', async () => {
+    const lastThirtyDays = new Date();
+    lastThirtyDays.setDate(lastThirtyDays.getDate() - 30);
+    const currentTime = new Date().toISOString();
+
+    const coverageReports = [
+      {
+        toJSON: jest.fn().mockReturnValue({
+          date: lastThirtyDays.toISOString(),
+          branchRate: 0.8,
+          lineRate: 0.9,
+        }),
+      },
+      {
+        toJSON: jest.fn().mockReturnValue({
+          date: currentTime,
+          branchRate: 0.7,
+          lineRate: 0.8,
+        })
+      },
+    ];
+
+    const coverageReportFindAllMock = jest.spyOn(CoverageReport, 'findAll').mockResolvedValue(coverageReports);
+
+    const result = await getBranchCoverageSummary(req);
+
+    const expectedResult = [
+      {
+        date: lastThirtyDays.toISOString(),
+        branchRate: 0.8,
+        lineRate: 0.9,
+      },
+      {
+        date: currentTime,
+        branchRate: 0.7,
+        lineRate: 0.8,
+      },
+    ];
+
+    expect(coverageReportFindAllMock).toHaveBeenCalledTimes(1);
+    expect(result).toEqual(expectedResult);
+  });
+
+  it('should return null if no coverage reports exist', async () => {
+    const coverageReportFindAllMock = jest.spyOn(CoverageReport, 'findAll').mockResolvedValue([]);
+
+    const result = await getBranchCoverageSummary(req);
+
+    expect(coverageReportFindAllMock).toHaveBeenCalledTimes(1);
+    expect(result).toBeNull();
+  });
+});
+
+describe('compareBranchCoverage', () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('should return coverage comparison', async () => {
+    const branchId = 1;
+    const primaryBranchId = 2;
+
+    const branchCoverage = {
+      branchRate: 0.8,
+      lineRate: 0.9,
+    };
+
+    const primaryBranchCoverage = {
+      branchRate: 0.7,
+      lineRate: 0.8,
+    };
+
+    const testReportFindOneMock = jest.spyOn(CoverageReport, 'findOne').mockImplementation((query) => {
+      if (query.where.branchId === 1) {
+        return branchCoverage;
+      } else if (query.where.branchId === 2) {
+        return primaryBranchCoverage;
+      }
+    });
+
+    const result = await compareBranchCoverage(branchId, primaryBranchId);
+
+    const expectedResult = {
+      primaryBranch: {
+        branchRate: '70.00%',
+        lineRate: '80.00%',
+      },
+      branch: {
+        branchRate: '80.00%',
+        lineRate: '90.00%',
+      },
+      difference: {
+        branchRate: '10.00%',
+        lineRate: '10.00%',
+      }
+    };
+
+    expect(testReportFindOneMock).toHaveBeenCalledTimes(2);
+    expect(result).toEqual(expectedResult);
   });
 });

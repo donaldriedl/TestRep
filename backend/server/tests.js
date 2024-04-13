@@ -156,7 +156,6 @@ async function getOrganizationTestSummary(req) {
     report.date = new Date(report.date).toISOString();
     report.totalPassed = Number(report.totalTests) - (Number(report.totalFailures) + Number(report.totalErrors) + Number(report.totalSkipped));
   }
-  console.log(jsonReports);
 
   return jsonReports;
 }
