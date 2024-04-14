@@ -2,7 +2,7 @@
     <v-card class="my-8" elevation="4">
       <v-row>
         <v-col cols="12">
-            <v-card-title class="bg-secondary"> Test Reports {{ props.reportData.date }} </v-card-title>
+            <v-card-title class="bg-secondary"> Test Report </v-card-title>
             <v-divider></v-divider>
             <v-row>
               <v-col>
@@ -10,6 +10,12 @@
               </v-col>
               <v-divider vertical inset></v-divider>
               <v-col>
+                <v-row class="my-1 align-center">
+                  <v-col>
+                    <h4>{{ props.reportData.date }}</h4>
+                  </v-col>
+                </v-row>
+                <v-divider></v-divider>
                 <v-row class="my-1 align-center">
                   <v-col>
                     <h4>Total Passed</h4>
@@ -43,15 +49,6 @@
                   </v-col>
                   <v-col>
                     <v-chip class="skipped">{{ props.reportData.totalSkipped ?? 0 }}</v-chip>
-                  </v-col>
-                </v-row>
-                <v-divider></v-divider>
-                <v-row class="my-1 align-center">
-                  <v-col>
-                    <h4>Duration</h4>
-                  </v-col>
-                  <v-col>
-                    <v-chip>{{ props.reportData.duration }} seconds</v-chip>
                   </v-col>
                 </v-row>
               </v-col>

@@ -75,7 +75,7 @@
   }
 
   .data-table-row:hover {
-    background-color: #f5f5f5;
+    background-color: rgba(0, 0, 0, 0.1);
   }
 
   .data-table-row td {

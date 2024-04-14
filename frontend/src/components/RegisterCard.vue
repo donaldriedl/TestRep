@@ -2,7 +2,7 @@
   <v-container class="fill-height">
     <v-responsive class="align-center text-center fill-height">
       <v-card class="mx-auto" max-width="400" elevation="4">
-        <v-card-title class="bg-secondary"> Login </v-card-title>
+        <v-card-title class="bg-secondary"> Register </v-card-title>
         <v-divider></v-divider>
         <v-card-text>
           <v-text-field v-model="emailField" label="Email" type="email" variant="underlined" />

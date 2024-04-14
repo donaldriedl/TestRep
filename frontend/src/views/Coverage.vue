@@ -37,13 +37,14 @@
     
     if (Helpers.validateResponse(response)) {
       const data = await response.json();
+      console.log(data);
       coverageData.value = {
-        date: Helpers.formatDate(data.CoverageDetails.resultTime),
-        lineRate: data.CoverageDetails.lineRate,
-        branchRate: data.CoverageDetails.branchRate,
-        coveredLines: data.CoverageDetails.totalLines,
-        totalLines: data.CoverageDetails.validLines,
-        coverageFiles: data.CoverageDetails.CoverageFiles
+        date: Helpers.formatDate(data.coverageDetails.resultTime),
+        lineRate: data.coverageDetails.lineRate,
+        branchRate: data.coverageDetails.branchRate,
+        coveredLines: data.coverageDetails.totalLines,
+        totalLines: data.coverageDetails.validLines,
+        coverageFiles: data.coverageDetails.CoverageFiles
       }
       reportDataLoaded.value = true;
     } else {

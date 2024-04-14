@@ -8,9 +8,16 @@ export default createVuetify({
     themes: {
       light: {
         colors: {
-          primary: '#284B63',
-          secondary: '#3C6E71',
-          background: '#F2EFEA',
+          primary: '#376787',
+          secondary: '#72838d',
+          background: '#f5f5f5',
+        },
+      },
+      dark: {
+        colors: {
+          primary: '#376787',
+          secondary: '#52636d',
+          background: '#252525',
         },
       },
     },

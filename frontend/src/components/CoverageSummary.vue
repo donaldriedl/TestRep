@@ -1,8 +1,8 @@
 <template>
     <v-row>
       <v-col cols="12">
-        <v-card elevation="4" class="m-4">
-          <v-card-title class="bg-secondary"> {{ props.coverageData.date }} </v-card-title>
+        <v-card elevation="4" class="my-8">
+          <v-card-title class="bg-secondary"> Coverage Report </v-card-title>
           <v-divider></v-divider>
           <v-row>
             <v-col>
@@ -10,6 +10,11 @@
             </v-col>
             <v-divider vertical inset></v-divider>
             <v-col>
+              <v-row class="my-1 align-center">
+                <v-col>
+                  <h4> {{ props.coverageData.date }} </h4>
+                </v-col>
+              </v-row>
               <v-divider></v-divider>
               <v-row class="my-1 align-center">
                 <v-col>

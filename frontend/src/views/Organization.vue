@@ -32,6 +32,7 @@
               <v-card-actions>
                 <v-btn text @click="saveSettings">Save</v-btn>
                 <v-btn text @click="showSettings = !showSettings; showOrgJoin = !showOrgJoin">Join Organization</v-btn>
+                <v-btn text @click="showSettings = !showSettings">Cancel</v-btn>
               </v-card-actions>
             </v-card>
           </v-dialog>
@@ -45,6 +46,7 @@
                 filled />
               <v-card-actions>
                 <v-btn text @click="joinOrganization">Save</v-btn>
+                <v-btn text @click="showOrgJoin = !showOrgJoin; showSettings = !showSettings">Cancel</v-btn>
               </v-card-actions>
             </v-card>
           </v-dialog>

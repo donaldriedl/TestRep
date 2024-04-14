@@ -47,9 +47,3 @@
     }
   }
 </script>
-
-<style scoped>
-  #testRepApp {
-    background-image: linear-gradient(to right, #f5f5f5, #ffffff, #f5f5f5);
-  }
-</style>
