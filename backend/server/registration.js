@@ -108,6 +108,19 @@ async function getOrganizationByUuid(uuid) {
   return organization;
 }
 
+async function demoFunction(a) {
+  console.log('Hello from the registration module');
+  console.log('This is a demo function');
+  console.log('This is a demo function');
+  console.log('This is a demo function');
+  if (a) {
+    console.log('This is a demo function');
+  } else {
+    console.log('This is a demo function');
+  }
+  return true;
+}
+
 module.exports = {
   createOrganization,
   createUser,
