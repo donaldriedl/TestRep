@@ -21,6 +21,66 @@ async function createOrganization(req, res) {
   }
 }
 
+async function fakeFunction() {
+  console.log("Fake");
+  console.log("Fake");
+  console.log("Fake");
+  console.log("Fake");
+  console.log("Fake");
+  console.log("Fake");
+  console.log("Fake");
+  console.log("Fake");
+  console.log("Fake");
+  console.log("Fake");
+  console.log("Fake");
+  console.log("Fake");
+  console.log("Fake");
+  console.log("Fake");
+  console.log("Fake");
+  console.log("Fake");
+  console.log("Fake");
+  console.log("Fake");
+  console.log("Fake");
+  console.log("Fake");
+  console.log("Fake");
+  console.log("Fake");
+  console.log("Fake");
+  console.log("Fake");
+  console.log("Fake");
+  console.log("Fake");
+  console.log("Fake");
+  console.log("Fake");
+  console.log("Fake");
+  console.log("Fake");
+  console.log("Fake");
+  console.log("Fake");
+  console.log("Fake");
+  console.log("Fake");
+  console.log("Fake");
+  console.log("Fake");
+  console.log("Fake");
+  console.log("Fake");
+  console.log("Fake");
+  console.log("Fake");
+  console.log("Fake");
+  console.log("Fake");
+  console.log("Fake");
+  console.log("Fake");
+  console.log("Fake");
+  console.log("Fake");
+  console.log("Fake");
+  console.log("Fake");
+  console.log("Fake");
+  console.log("Fake");
+  console.log("Fake");
+  console.log("Fake");
+  console.log("Fake");
+  console.log("Fake");
+  console.log("Fake");
+  console.log("Fake");
+  console.log("Fake");
+}
+
 async function createUser(req, res) {
     const { email, password, orgUuid } = req.body;
 

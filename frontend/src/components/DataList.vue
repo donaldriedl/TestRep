@@ -3,7 +3,6 @@
     class="data-table"
     :headers="headers"
     :items="props.repoData"
-    :items-per-page="5"
     :hide-default-footer="true"
   >
     <template v-slot:item = "{ item }">
